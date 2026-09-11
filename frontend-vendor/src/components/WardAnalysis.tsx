@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Plus, Trash2, MapPin, Loader2, AlertTriangle, CheckCircle2, Map as MapIcon } from 'lucide-react';
 import { ApiError, wardApi } from '@/api/client';
 import type { Ward, WardClassifyResponse, WardGeometry } from '@/api/types';
+import { WARD_CATALOG } from '@/data/wardCatalog';
+import ExpansionAnalysis from './ExpansionAnalysis';
 
 // Steps 1-7 of the ward market-expansion methodology, run from this tab:
 //   1. Ward boundary + area (Earth Engine), cross-checked with WorldPop
@@ -290,25 +292,41 @@ export default function WardAnalysis() {
           <tbody className="divide-y divide-gray-100">
             {wards.map((w) => (
               <tr key={w._localId}>
-                <td className="px-3 py-2">
-                  <input type="radio" checked={!!w.is_target} onChange={() => setTarget(w._localId)} />
-                </td>
-                <td className="px-3 py-2">
-                  <input
-                    className="w-32 rounded-lg border border-gray-200 px-2 py-1"
-                    value={w.name ?? ''}
-                    onChange={(e) => updateRow(w._localId, { name: e.target.value })}
-                    placeholder="Ward 7"
-                  />
-                </td>
+             <td className="px-3 py-2">
+  <select
+    className="w-36 rounded-lg border border-gray-200 px-2 py-1 text-sm bg-white"
+    value={w.name ?? ''}
+    onChange={(e) => {
+      const picked = WARD_CATALOG.find((c) => c.name === e.target.value);
+      if (picked) {
+        updateRow(w._localId, {
+          name: picked.name,
+          population_density: picked.population_density,
+          household_density: picked.household_density,
+          sws_percent: picked.sws_percent,
+        });
+      } else {
+        updateRow(w._localId, { name: '', population_density: null, household_density: null, sws_percent: null });
+      }
+    }}
+  >
+    <option value="">Pick a ward…</option>
+    {WARD_CATALOG.map((c) => (
+      <option key={c.name} value={c.name}>
+        {c.name}
+      </option>
+    ))}
+  </select>
+</td>
                 {INDICATOR_FIELDS.map((f) => (
                   <td key={f.key} className="px-3 py-2">
                     <input
-                      type="number"
-                      className="w-24 rounded-lg border border-gray-200 px-2 py-1"
-                      value={w[f.key] ?? ''}
-                      onChange={(e) => updateRow(w._localId, { [f.key]: toNumOrNull(e.target.value) } as Partial<EditableWard>)}
-                    />
+  type="number"
+  className={`w-24 rounded-lg border border-gray-200 px-2 py-1 ${w.name && WARD_CATALOG.some(c => c.name === w.name) ? 'bg-gray-50 text-gray-600' : ''}`}
+  value={w[f.key] ?? ''}
+  readOnly={!!(w.name && WARD_CATALOG.some(c => c.name === w.name))}
+  onChange={(e) => updateRow(w._localId, { [f.key]: toNumOrNull(e.target.value) } as Partial<EditableWard>)}
+/>
                   </td>
                 ))}
                 <td className="px-3 py-2">
@@ -428,20 +446,9 @@ export default function WardAnalysis() {
         </div>
       )}
 
-      <div>
-        <h4 className="font-semibold text-sm text-gray-900 mb-2 flex items-center gap-1.5">
-          <MapIcon className="w-4 h-4" /> Step 7 — wards colored by category
-        </h4>
-        <WardMap wards={wardsWithBoundary} />
-        <div className="flex flex-wrap gap-3 mt-2">
-          {Object.entries(CATEGORY_COLORS).map(([label, color]) => (
-            <span key={label} className="flex items-center gap-1.5 text-xs text-gray-500">
-              <span className="w-3 h-3 rounded-sm inline-block" style={{ backgroundColor: color }} />
-              {label}
-            </span>
-          ))}
-        </div>
-      </div>
+             {/* ─── NEW: Expansion Opportunities ─── */}
+      <ExpansionAnalysis wards={wardsWithBoundary} />
+
     </div>
   );
 }

@@ -41,6 +41,9 @@ export default function InventoryTable({ products, onAdd, onUpdate, onDelete }: 
     selling_price: 0,
     quantity: 0,
   });
+  
+  // Track failed image URLs to cleanly display fallback badges
+  const [failedImages, setFailedImages] = useState<Record<number, boolean>>({});
 
   const filtered = products.filter(
     (p) =>
@@ -67,13 +70,24 @@ export default function InventoryTable({ products, onAdd, onUpdate, onDelete }: 
     e.preventDefault();
     if (!form.name.trim()) return;
     setSaving(true);
+
+    // Normalize Image URL if missing http/https prefix
+    let formattedImageUrl = form.image_url.trim();
+    if (formattedImageUrl && !/^https?:\/\//i.test(formattedImageUrl)) {
+      formattedImageUrl = `https://${formattedImageUrl}`;
+    }
+
     try {
-      await onAdd(form);
+      await onAdd({ ...form, image_url: formattedImageUrl });
       setForm(emptyForm);
       setAdding(false);
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleImageError = (id: number) => {
+    setFailedImages((prev) => ({ ...prev, [id]: true }));
   };
 
   return (
@@ -161,7 +175,7 @@ export default function InventoryTable({ products, onAdd, onUpdate, onDelete }: 
             className="px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-primary-200"
           />
           <input
-            type="url"
+            type="text"
             placeholder="Image URL (optional)"
             value={form.image_url}
             onChange={(e) => setForm({ ...form, image_url: e.target.value })}
@@ -202,13 +216,20 @@ export default function InventoryTable({ products, onAdd, onUpdate, onDelete }: 
             {filtered.map((product) => {
               const lowStock = product.quantity <= product.reorder_level;
               const isEditing = editingId === product.id;
+              const hasImageError = failedImages[product.id];
+
               return (
                 <tr key={product.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2.5">
                       <div className="w-9 h-9 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
-                        {product.image_url ? (
-                          <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                        {product.image_url && !hasImageError ? (
+                          <img
+                            src={product.image_url}
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                            onError={() => handleImageError(product.id)}
+                          />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-400 font-bold">
                             {product.name.slice(0, 2).toUpperCase()}
