@@ -1,6 +1,8 @@
 import { Star, Leaf, Plus, Check } from 'lucide-react';
 import type { Product } from '@/types';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { trackProductView } from '@/api/client';
+import { getViewerKey } from '@/lib/viewerKey';
 
 interface ProductCardProps {
   product: Product;
@@ -10,6 +12,30 @@ interface ProductCardProps {
 export default function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const [added, setAdded] = useState(false);
   const discount = Math.round(((product.mrp - product.price) / product.mrp) * 100);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const trackedRef = useRef(false);
+
+  // Smart Pricing needs a "views" signal, and there's no dedicated product
+  // detail page to track a visit to - so a card counts as "viewed" once it's
+  // actually been scrolled into view, not just rendered in an off-screen
+  // list. Fires at most once per card per mount; server-side dedup handles
+  // the rest (one count per viewer per product per day).
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && !trackedRef.current) {
+          trackedRef.current = true;
+          trackProductView(product.id, getViewerKey());
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [product.id]);
 
   const handleAdd = () => {
     onAddToCart(product);
@@ -25,7 +51,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
   const stockLabel = product.stock <= 2 ? `Only ${product.stock} Left!` : 'In Stock';
 
   return (
-    <div className="group bg-white rounded-2xl border border-gray-100 shadow-soft hover:shadow-card transition-all duration-300 overflow-hidden flex flex-col">
+    <div ref={cardRef} className="group bg-white rounded-2xl border border-gray-100 shadow-soft hover:shadow-card transition-all duration-300 overflow-hidden flex flex-col">
       {/* Image */}
       <div className="relative aspect-[4/3] overflow-hidden bg-gray-50">
         <img

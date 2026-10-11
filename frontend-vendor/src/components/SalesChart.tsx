@@ -35,32 +35,32 @@ export default function SalesChart({ data = [], expanded = false }: SalesChartPr
  
   if (data.length === 0) {
     return (
-      <div className={`bg-white rounded-2xl border border-gray-100 shadow-soft p-5 ${expanded ? 'h-96' : ''}`}>
-        <h3 className="font-display font-bold text-base text-gray-900">Sales Performance</h3>
-        <p className="text-xs text-gray-400 font-medium mt-0.5">Actual vs AI-predicted revenue</p>
+      <div className={`bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-soft p-5 ${expanded ? 'h-96' : ''}`}>
+        <h3 className="font-display font-bold text-base text-gray-900 dark:text-gray-100">Sales Performance</h3>
+        <p className="text-xs text-gray-400 dark:text-gray-500 font-medium mt-0.5">Actual vs AI-predicted revenue</p>
         <div className="h-48 flex items-center justify-center mt-4">
-          <p className="text-sm text-gray-400">No monthly data available.</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">No monthly data available.</p>
         </div>
       </div>
     );
   }
  
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-soft p-5">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-soft p-5">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h3 className="font-display font-bold text-base text-gray-900">Sales Performance</h3>
-          <p className="text-xs text-gray-400 font-medium mt-0.5">Actual vs AI-predicted revenue</p>
+          <h3 className="font-display font-bold text-base text-gray-900 dark:text-gray-100">Sales Performance</h3>
+          <p className="text-xs text-gray-400 dark:text-gray-500 font-medium mt-0.5">Actual vs AI-predicted revenue</p>
         </div>
         <div className="flex items-center gap-3 text-xs">
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-full bg-primary-500" />
-            <span className="text-gray-500 font-medium">Actual</span>
+            <span className="text-gray-500 dark:text-gray-400 font-medium">Actual</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-full border-2 border-accent-400 border-dashed" />
-            <span className="text-gray-500 font-medium">Predicted</span>
+            <span className="text-gray-500 dark:text-gray-400 font-medium">Predicted</span>
           </div>
         </div>
       </div>
@@ -70,7 +70,7 @@ export default function SalesChart({ data = [], expanded = false }: SalesChartPr
         {/* Background Grid Lines */}
         <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
           {[0, 1, 2, 3].map(i => (
-            <div key={i} className="border-t border-gray-100 w-full" />
+            <div key={i} className="border-t border-gray-100 dark:border-gray-700 w-full" />
           ))}
         </div>
  
@@ -116,24 +116,24 @@ export default function SalesChart({ data = [], expanded = false }: SalesChartPr
       {/* Month Labels (Placed Outside Chart Canvas) */}
       <div className="flex justify-between mt-3 px-2">
         {data.map((point, idx) => (
-          <span key={point.month || idx} className="text-[11px] text-gray-400 font-medium flex-1 text-center truncate">
+          <span key={point.month || idx} className="text-[11px] text-gray-400 dark:text-gray-500 font-medium flex-1 text-center truncate">
             {point.month}
           </span>
         ))}
       </div>
  
       {/* Summary Stats Footer */}
-      <div className="grid grid-cols-3 gap-3 mt-5 pt-4 border-t border-gray-100">
+      <div className="grid grid-cols-3 gap-3 mt-5 pt-4 border-t border-gray-100 dark:border-gray-700">
         <div>
-          <p className="text-[11px] text-gray-400 font-medium">Total Revenue</p>
-          <p className="font-display font-bold text-sm text-gray-900">{formatCompact(totalRevenue)}</p>
+          <p className="text-[11px] text-gray-400 dark:text-gray-500 font-medium">Total Revenue</p>
+          <p className="font-display font-bold text-sm text-gray-900 dark:text-gray-100">{formatCompact(totalRevenue)}</p>
         </div>
         <div>
-          <p className="text-[11px] text-gray-400 font-medium">Avg Monthly</p>
-          <p className="font-display font-bold text-sm text-gray-900">{formatCompact(avgMonthly)}</p>
+          <p className="text-[11px] text-gray-400 dark:text-gray-500 font-medium">Avg Monthly</p>
+          <p className="font-display font-bold text-sm text-gray-900 dark:text-gray-100">{formatCompact(avgMonthly)}</p>
         </div>
         <div>
-          <p className="text-[11px] text-gray-400 font-medium">Growth Trend</p>
+          <p className="text-[11px] text-gray-400 dark:text-gray-500 font-medium">Growth Trend</p>
           <p className={`font-display font-bold text-sm ${yoyPositive ? 'text-primary-600' : 'text-red-500'}`}>
             {yoyText}
           </p>

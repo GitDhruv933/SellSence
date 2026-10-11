@@ -3,6 +3,7 @@ import { Store, Loader2, MapPin } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { ApiError } from '@/api/client';
+import ThemeToggle from './ThemeToggle';
 
 export default function AuthScreen() {
   const { login, signup } = useAuth();
@@ -46,17 +47,20 @@ export default function AuthScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-10">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4 py-10 relative">
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-md">
         <div className="text-center mb-6">
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent-400 to-accent-600 flex items-center justify-center shadow-soft mx-auto mb-3">
             <Store className="w-7 h-7 text-white" strokeWidth={2.5} />
           </div>
-          <h1 className="font-display font-extrabold text-2xl text-gray-900">SellSence for Vendors</h1>
-          <p className="text-sm text-gray-400 font-medium">Manage your shop, orders, and sales</p>
+          <h1 className="font-display font-extrabold text-2xl text-gray-900 dark:text-gray-100">SellSence for Vendors</h1>
+          <p className="text-sm text-gray-400 dark:text-gray-500 font-medium">Manage your shop, orders, and sales</p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-card p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-card p-6">
           <form onSubmit={handleSubmit} className="space-y-3">
             {mode === 'signup' && (
               <input
@@ -65,7 +69,7 @@ export default function AuthScreen() {
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Your name"
                 required
-                className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm font-medium outline-none focus:ring-2 focus:ring-accent-200 focus:border-accent-300"
+                className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 text-sm font-medium outline-none focus:ring-2 focus:ring-accent-200 focus:border-accent-300"
               />
             )}
             <input
@@ -74,7 +78,7 @@ export default function AuthScreen() {
               onChange={(e) => setPhone(e.target.value)}
               placeholder="Phone number"
               required
-              className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm font-medium outline-none focus:ring-2 focus:ring-accent-200 focus:border-accent-300"
+              className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 text-sm font-medium outline-none focus:ring-2 focus:ring-accent-200 focus:border-accent-300"
             />
             <input
               type="password"
@@ -83,7 +87,7 @@ export default function AuthScreen() {
               placeholder="Password (min. 6 characters)"
               required
               minLength={6}
-              className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm font-medium outline-none focus:ring-2 focus:ring-accent-200 focus:border-accent-300"
+              className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 text-sm font-medium outline-none focus:ring-2 focus:ring-accent-200 focus:border-accent-300"
             />
 
             {mode === 'signup' && (
@@ -94,21 +98,21 @@ export default function AuthScreen() {
                   onChange={(e) => setShopName(e.target.value)}
                   placeholder="Shop name"
                   required
-                  className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm font-medium outline-none focus:ring-2 focus:ring-accent-200 focus:border-accent-300"
+                  className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 text-sm font-medium outline-none focus:ring-2 focus:ring-accent-200 focus:border-accent-300"
                 />
                 <input
                   type="text"
                   value={shopCategory}
                   onChange={(e) => setShopCategory(e.target.value)}
                   placeholder="Shop category (e.g. Kirana, Grocery)"
-                  className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm font-medium outline-none focus:ring-2 focus:ring-accent-200 focus:border-accent-300"
+                  className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 text-sm font-medium outline-none focus:ring-2 focus:ring-accent-200 focus:border-accent-300"
                 />
                 <input
                   type="text"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   placeholder="Shop address"
-                  className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm font-medium outline-none focus:ring-2 focus:ring-accent-200 focus:border-accent-300"
+                  className="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 text-sm font-medium outline-none focus:ring-2 focus:ring-accent-200 focus:border-accent-300"
                 />
                 <button
                   type="button"
@@ -125,7 +129,7 @@ export default function AuthScreen() {
               </>
             )}
 
-            {error && <p className="text-xs font-semibold text-red-600">{error}</p>}
+            {error && <p className="text-xs font-semibold text-red-600 dark:text-red-400">{error}</p>}
 
             <button
               type="submit"
@@ -137,7 +141,7 @@ export default function AuthScreen() {
             </button>
           </form>
 
-          <p className="text-center text-xs text-gray-500 mt-4">
+          <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-4">
             {mode === 'login' ? "Don't have a shop account?" : 'Already registered?'}{' '}
             <button
               type="button"
@@ -148,7 +152,7 @@ export default function AuthScreen() {
             </button>
           </p>
 
-          <p className="text-center text-[11px] text-gray-400 mt-3">
+          <p className="text-center text-[11px] text-gray-400 dark:text-gray-500 mt-3">
             Looking to shop?{' '}
             <a href={import.meta.env.VITE_CUSTOMER_APP_URL || '#'} className="font-semibold text-primary-700">
               Go to the customer site

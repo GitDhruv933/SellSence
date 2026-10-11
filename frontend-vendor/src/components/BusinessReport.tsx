@@ -13,8 +13,8 @@ import type { BusinessReport as BusinessReportData } from '@/api/types';
 
 function Section({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-soft p-4">
-      <h3 className="flex items-center gap-2 font-semibold text-gray-800 mb-3">
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-soft p-4">
+      <h3 className="flex items-center gap-2 font-semibold text-gray-800 dark:text-gray-100 mb-3">
         {icon}
         {title}
       </h3>
@@ -25,12 +25,12 @@ function Section({ title, icon, children }: { title: string; icon: React.ReactNo
 
 function BulletList({ items, tone }: { items: string[]; tone: 'green' | 'red' | 'blue' | 'amber' }) {
   const toneClasses: Record<string, string> = {
-    green: 'text-green-700 before:text-green-500',
-    red: 'text-red-700 before:text-red-500',
-    blue: 'text-blue-700 before:text-blue-500',
-    amber: 'text-amber-700 before:text-amber-500',
+    green: 'text-green-700 dark:text-green-300 before:text-green-500',
+    red: 'text-red-700 dark:text-red-300 before:text-red-500',
+    blue: 'text-blue-700 dark:text-blue-300 before:text-blue-500',
+    amber: 'text-amber-700 dark:text-amber-300 before:text-amber-500',
   };
-  if (items.length === 0) return <p className="text-sm text-gray-400 italic">Nothing notable found.</p>;
+  if (items.length === 0) return <p className="text-sm text-gray-400 dark:text-gray-500 italic">Nothing notable found.</p>;
   return (
     <ul className="space-y-1.5">
       {items.map((item, i) => (
@@ -69,39 +69,39 @@ export default function BusinessReport() {
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-xl border border-gray-100 shadow-soft p-4">
-        <h2 className="font-semibold text-gray-800 mb-1">Local Business Report</h2>
-        <p className="text-xs text-gray-500 mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-soft p-4">
+        <h2 className="font-semibold text-gray-800 dark:text-gray-100 mb-1">Local Business Report</h2>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
           Uses your shop's registered location against other customers and vendors already in the app - the
           more customers and vendors are registered nearby, the more useful this report gets.
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 items-end">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Near radius (km)</label>
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Near radius (km)</label>
             <input
               type="number"
               value={nearKm}
               onChange={(e) => setNearKm(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm"
+              className="w-full rounded-lg border border-gray-200 dark:border-gray-600 px-2 py-1.5 text-sm"
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Far radius (km)</label>
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Far radius (km)</label>
             <input
               type="number"
               value={farKm}
               onChange={(e) => setFarKm(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm"
+              className="w-full rounded-lg border border-gray-200 dark:border-gray-600 px-2 py-1.5 text-sm"
             />
           </div>
           <div className="col-span-2 sm:col-span-1">
-            <label className="block text-xs text-gray-500 mb-1">Avg. local monthly income (₹, optional)</label>
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Avg. local monthly income (₹, optional)</label>
             <input
               type="number"
               value={avgIncome}
               onChange={(e) => setAvgIncome(e.target.value)}
               placeholder="e.g. 18000"
-              className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm"
+              className="w-full rounded-lg border border-gray-200 dark:border-gray-600 px-2 py-1.5 text-sm"
             />
           </div>
           <button
@@ -113,14 +113,14 @@ export default function BusinessReport() {
             {report ? 'Regenerate' : 'Generate report'}
           </button>
         </div>
-        <p className="text-xs text-gray-400 mt-2">
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
           Leaving the income field blank falls back to your Ward Analysis (if you've run one) for a pricing
           suggestion; otherwise pricing is skipped.
         </p>
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 bg-red-50 text-red-700 text-sm rounded-lg p-3">
+        <div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 text-sm rounded-lg p-3">
           <AlertTriangle size={16} /> {error}
         </div>
       )}
@@ -128,33 +128,33 @@ export default function BusinessReport() {
       {report && (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="bg-white rounded-xl border border-gray-100 shadow-soft p-3 text-center">
-              <div className="text-2xl font-bold text-gray-800">{report.customers_nearby.within_near_radius}</div>
-              <div className="text-xs text-gray-500">customers within {report.radius_km.near}km</div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-soft p-3 text-center">
+              <div className="text-2xl font-bold text-gray-800 dark:text-gray-100">{report.customers_nearby.within_near_radius}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">customers within {report.radius_km.near}km</div>
             </div>
-            <div className="bg-white rounded-xl border border-gray-100 shadow-soft p-3 text-center">
-              <div className="text-2xl font-bold text-gray-800">{report.customers_nearby.near_to_far_radius}</div>
-              <div className="text-xs text-gray-500">{report.radius_km.near}-{report.radius_km.far}km</div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-soft p-3 text-center">
+              <div className="text-2xl font-bold text-gray-800 dark:text-gray-100">{report.customers_nearby.near_to_far_radius}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">{report.radius_km.near}-{report.radius_km.far}km</div>
             </div>
-            <div className="bg-white rounded-xl border border-gray-100 shadow-soft p-3 text-center">
-              <div className="text-2xl font-bold text-gray-800">{report.competitors.count}</div>
-              <div className="text-xs text-gray-500">same-category shops nearby</div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-soft p-3 text-center">
+              <div className="text-2xl font-bold text-gray-800 dark:text-gray-100">{report.competitors.count}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">same-category shops nearby</div>
             </div>
-            <div className="bg-white rounded-xl border border-gray-100 shadow-soft p-3 text-center">
-              <div className="text-2xl font-bold text-gray-800">{report.categories.missing.length}</div>
-              <div className="text-xs text-gray-500">category gaps found</div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-soft p-3 text-center">
+              <div className="text-2xl font-bold text-gray-800 dark:text-gray-100">{report.categories.missing.length}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">category gaps found</div>
             </div>
           </div>
 
           <Section title="Competitor mapping" icon={<Store size={16} />}>
             {report.competitors.nearest.length === 0 ? (
-              <p className="text-sm text-gray-400 italic">No other shops in the same category found nearby.</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 italic">No other shops in the same category found nearby.</p>
             ) : (
               <ul className="space-y-1">
                 {report.competitors.nearest.map((c, i) => (
-                  <li key={i} className="flex justify-between text-sm text-gray-700">
+                  <li key={i} className="flex justify-between text-sm text-gray-700 dark:text-gray-200">
                     <span>{c.shop_name || 'Unnamed shop'}</span>
-                    <span className="text-gray-400">{c.distance_km} km</span>
+                    <span className="text-gray-400 dark:text-gray-500">{c.distance_km} km</span>
                   </li>
                 ))}
               </ul>
@@ -163,11 +163,11 @@ export default function BusinessReport() {
 
           <Section title="Missing business opportunities" icon={<Users size={16} />}>
             {report.categories.missing.length === 0 ? (
-              <p className="text-sm text-gray-400 italic">Most common categories are already represented nearby.</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 italic">Most common categories are already represented nearby.</p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {report.categories.missing.map((c) => (
-                  <span key={c} className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded-full">{c}</span>
+                  <span key={c} className="text-xs bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-300 px-2 py-1 rounded-full">{c}</span>
                 ))}
               </div>
             )}
@@ -176,19 +176,19 @@ export default function BusinessReport() {
           <Section title="SWOT analysis" icon={<TrendingUp size={16} />}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <p className="text-xs font-medium text-gray-500 mb-1">Strengths</p>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Strengths</p>
                 <BulletList items={report.narrative.swot.strengths} tone="green" />
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500 mb-1">Weaknesses</p>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Weaknesses</p>
                 <BulletList items={report.narrative.swot.weaknesses} tone="red" />
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500 mb-1">Opportunities</p>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Opportunities</p>
                 <BulletList items={report.narrative.swot.opportunities} tone="blue" />
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500 mb-1">Threats</p>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Threats</p>
                 <BulletList items={report.narrative.swot.threats} tone="amber" />
               </div>
             </div>
@@ -200,10 +200,10 @@ export default function BusinessReport() {
 
           <Section title="Suggested pricing" icon={<IndianRupee size={16} />}>
             {report.pricing.income_source === 'unavailable' ? (
-              <p className="text-sm text-gray-500">{report.pricing.note}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{report.pricing.note}</p>
             ) : (
               <>
-                <p className="text-sm text-gray-600 mb-2">
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
                   {report.pricing.income_bracket && (
                     <>
                       Area classified as <span className="font-medium">{report.pricing.income_bracket}</span> income
@@ -215,7 +215,7 @@ export default function BusinessReport() {
                 {report.pricing.sample_products.length > 0 && (
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="text-left text-xs text-gray-400">
+                      <tr className="text-left text-xs text-gray-400 dark:text-gray-500">
                         <th className="py-1">Product</th>
                         <th className="py-1">Cost</th>
                         <th className="py-1">Current</th>
@@ -224,7 +224,7 @@ export default function BusinessReport() {
                     </thead>
                     <tbody>
                       {report.pricing.sample_products.map((p, i) => (
-                        <tr key={i} className="border-t border-gray-50">
+                        <tr key={i} className="border-t border-gray-50 dark:border-gray-700">
                           <td className="py-1.5">{p.name}</td>
                           <td className="py-1.5">₹{p.cost_price}</td>
                           <td className="py-1.5">₹{p.current_price}</td>
@@ -236,12 +236,12 @@ export default function BusinessReport() {
                     </tbody>
                   </table>
                 )}
-                <p className="text-xs text-gray-400 mt-2">{report.narrative.pricing_note}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">{report.narrative.pricing_note}</p>
               </>
             )}
           </Section>
 
-          <p className="text-xs text-gray-400 text-center">
+          <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
             Generated {new Date(report.generated_at).toLocaleString()} · narrative source: {report.narrative.source}
           </p>
         </>

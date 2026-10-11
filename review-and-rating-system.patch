@@ -1,0 +1,892 @@
+diff --git a/backend/db.js b/backend/db.js
+index 724090f..358f599 100644
+--- a/backend/db.js
++++ b/backend/db.js
+@@ -229,6 +229,8 @@ ensureColumn('users', 'address', 'TEXT');
+ ensureColumn('users', 'latitude', 'REAL');
+ ensureColumn('users', 'longitude', 'REAL');
+ ensureColumn('products', 'image_url', 'TEXT');
++ensureColumn('reviews', 'vendor_reply', 'TEXT');
++ensureColumn('reviews', 'vendor_reply_at', 'TEXT');
+ 
+ // Seed the two global default pricing rules once. vendor_id IS NULL means
+ // "applies to every vendor unless they have their own row for this
+diff --git a/backend/routes/reviews.js b/backend/routes/reviews.js
+index 8abff59..9440a85 100644
+--- a/backend/routes/reviews.js
++++ b/backend/routes/reviews.js
+@@ -15,7 +15,7 @@ router.get('/product/:productId', (req, res) => {
+   const productId = req.params.productId;
+   const reviews = db
+     .prepare(
+-      `SELECT r.id, r.rating, r.comment, r.created_at, u.name AS customer_name
++      `SELECT r.id, r.rating, r.comment, r.created_at, r.vendor_reply, r.vendor_reply_at, u.name AS customer_name
+        FROM reviews r JOIN users u ON u.id = r.customer_id
+        WHERE r.product_id = ?
+        ORDER BY r.created_at DESC`
+@@ -95,4 +95,38 @@ router.post('/', (req, res) => {
+   res.status(201).json(review);
+ });
+ 
++// GET /reviews/mine - every review left on the calling vendor's products,
++// newest first. The plain "read what people said" inbox - separate from
++// Word Analysis (phrase mining) and Smart Pricing (quality-signal
++// detection), which both read this same table but only ever show a
++// derived summary, never the raw list.
++router.get('/mine', (req, res) => {
++  const rows = db
++    .prepare(
++      `SELECT r.id, r.rating, r.comment, r.created_at, r.vendor_reply, r.vendor_reply_at,
++              r.product_id, p.name AS product_name, u.name AS customer_name
++       FROM reviews r
++       JOIN products p ON p.id = r.product_id
++       JOIN users u ON u.id = r.customer_id
++       WHERE r.vendor_id = ?
++       ORDER BY r.created_at DESC`
++    )
++    .all(req.userId);
++  res.json({ reviews: rows });
++});
++
++// PUT /reviews/:id/reply { reply } - a vendor's public reply to one review
++// on their own product. Empty string clears a previously-set reply.
++router.put('/:id/reply', (req, res) => {
++  const review = db.prepare('SELECT * FROM reviews WHERE id = ? AND vendor_id = ?').get(req.params.id, req.userId);
++  if (!review) return res.status(404).json({ error: 'Review not found' });
++
++  const reply = String(req.body?.reply || '').trim().slice(0, 500);
++  db.prepare(
++    `UPDATE reviews SET vendor_reply = ?, vendor_reply_at = CASE WHEN ? = '' THEN NULL ELSE datetime('now') END WHERE id = ?`
++  ).run(reply || null, reply, req.params.id);
++
++  res.json(db.prepare('SELECT * FROM reviews WHERE id = ?').get(req.params.id));
++});
++
+ module.exports = router;
+diff --git a/backend/routes/shops.js b/backend/routes/shops.js
+index 0e74d86..17169b8 100644
+--- a/backend/routes/shops.js
++++ b/backend/routes/shops.js
+@@ -37,10 +37,15 @@ router.get('/', (req, res) => {
+   let shops = vendors.map((v) => {
+     const itemCount = db.prepare('SELECT COUNT(*) AS c FROM products WHERE user_id = ?').get(v.id).c;
+     const dist = distanceKm(lat, lng, v.latitude, v.longitude);
++    const rating = db
++      .prepare('SELECT COUNT(*) AS count, COALESCE(AVG(rating), 0) AS average FROM reviews WHERE vendor_id = ?')
++      .get(v.id);
+     return {
+       ...stripPassword(v),
+       item_count: itemCount,
+       distance_km: dist !== null ? Number(dist.toFixed(2)) : null,
++      avg_rating: rating.count > 0 ? Number(rating.average.toFixed(2)) : 0,
++      review_count: rating.count,
+     };
+   });
+ 
+diff --git a/frontend-customer/src/api/adapters.ts b/frontend-customer/src/api/adapters.ts
+index 2e26afb..1b93208 100644
+--- a/frontend-customer/src/api/adapters.ts
++++ b/frontend-customer/src/api/adapters.ts
+@@ -11,7 +11,7 @@ export function shopToVendor(shop: Shop): Vendor {
+   return {
+     id: String(shop.id),
+     name: shop.shop_name || shop.name,
+-    rating: 0,
++    rating: shop.avg_rating ?? 0,
+     distanceKm: shop.distance_km ?? 0,
+     image: placeholderImage(shop.shop_name || shop.name, '059669'),
+     ecoFriendly: false,
+diff --git a/frontend-customer/src/api/types.ts b/frontend-customer/src/api/types.ts
+index 840803f..8dedd56 100644
+--- a/frontend-customer/src/api/types.ts
++++ b/frontend-customer/src/api/types.ts
+@@ -25,6 +25,8 @@ export interface Shop {
+   longitude: number | null;
+   item_count: number;
+   distance_km: number | null;
++  avg_rating?: number;
++  review_count?: number;
+ }
+ 
+ export interface BackendProduct {
+@@ -50,6 +52,8 @@ export interface Review {
+   comment: string;
+   created_at: string;
+   customer_name: string;
++  vendor_reply: string | null;
++  vendor_reply_at: string | null;
+ }
+ 
+ export interface ProductReviewSummary {
+diff --git a/frontend-customer/src/components/CustomerView.tsx b/frontend-customer/src/components/CustomerView.tsx
+index 797733b..5f0284a 100644
+--- a/frontend-customer/src/components/CustomerView.tsx
++++ b/frontend-customer/src/components/CustomerView.tsx
+@@ -1,4 +1,4 @@
+-import { Search, MapPin, Navigation, ChevronLeft, Leaf, ShoppingBag, Loader2, Store } from 'lucide-react';
++import { Search, MapPin, Navigation, ChevronLeft, Leaf, ShoppingBag, Loader2, Store, Star } from 'lucide-react';
+ import { useEffect, useMemo, useState } from 'react';
+ import type { Product } from '@/types';
+ import type { Shop, BackendProduct } from '@/api/types';
+@@ -6,6 +6,7 @@ import { api } from '@/api/client';
+ import { shopToVendor, backendProductToProduct } from '@/api/adapters';
+ import { useGeolocation } from '@/hooks/useGeolocation';
+ import ProductCard from './ProductCard';
++import ProductDetailDrawer from './ProductDetailDrawer';
+ 
+ interface CustomerViewProps {
+   onAddToCart: (product: Product) => void;
+@@ -16,6 +17,7 @@ export default function CustomerView({ onAddToCart }: CustomerViewProps) {
+   const [shops, setShops] = useState<Shop[]>([]);
+   const [shopsLoading, setShopsLoading] = useState(true);
+   const [search, setSearch] = useState('');
++  const [detailProduct, setDetailProduct] = useState<Product | null>(null);
+ 
+   const [activeShop, setActiveShop] = useState<Shop | null>(null);
+   const [shopProducts, setShopProducts] = useState<BackendProduct[]>([]);
+@@ -58,6 +60,7 @@ export default function CustomerView({ onAddToCart }: CustomerViewProps) {
+   // --- Shop detail (browsing a single vendor's catalog) ---
+   if (activeShop) {
+     return (
++      <>
+       <div className="min-h-screen bg-gray-50">
+         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+           <button
+@@ -76,6 +79,16 @@ export default function CustomerView({ onAddToCart }: CustomerViewProps) {
+               <h2 className="font-display font-extrabold text-2xl text-gray-900">{activeShop.shop_name}</h2>
+               <div className="flex items-center gap-2 text-sm text-gray-500">
+                 {activeShop.shop_category && <span>{activeShop.shop_category}</span>}
++                {!!activeShop.review_count && (
++                  <>
++                    <span className="w-1 h-1 rounded-full bg-gray-300" />
++                    <span className="flex items-center gap-0.5">
++                      <Star className="w-3.5 h-3.5 fill-accent-400 text-accent-400" />
++                      <span className="font-semibold text-gray-700">{activeShop.avg_rating}</span>
++                      <span className="text-gray-400">({activeShop.review_count})</span>
++                    </span>
++                  </>
++                )}
+                 {activeShop.distance_km !== null && (
+                   <>
+                     <span className="w-1 h-1 rounded-full bg-gray-300" />
+@@ -110,6 +123,7 @@ export default function CustomerView({ onAddToCart }: CustomerViewProps) {
+                   key={p.id}
+                   product={backendProductToProduct(p, activeShop)}
+                   onAddToCart={onAddToCart}
++                  onOpenDetail={setDetailProduct}
+                 />
+               ))}
+             </div>
+@@ -125,6 +139,8 @@ export default function CustomerView({ onAddToCart }: CustomerViewProps) {
+           )}
+         </div>
+       </div>
++      <ProductDetailDrawer product={detailProduct} onClose={() => setDetailProduct(null)} onAddToCart={onAddToCart} />
++      </>
+     );
+   }
+ 
+@@ -232,6 +248,15 @@ export default function CustomerView({ onAddToCart }: CustomerViewProps) {
+                         {shop.shop_name}
+                       </h4>
+                       <div className="flex items-center gap-2 text-xs text-gray-500">
++                        {!!shop.review_count && (
++                          <>
++                            <span className="flex items-center gap-0.5">
++                              <Star className="w-3 h-3 fill-accent-400 text-accent-400" />
++                              <span className="font-semibold text-gray-700">{shop.avg_rating}</span>
++                            </span>
++                            <span className="w-1 h-1 rounded-full bg-gray-300" />
++                          </>
++                        )}
+                         {shop.shop_category && (
+                           <>
+                             <span>{shop.shop_category}</span>
+diff --git a/frontend-customer/src/components/MyOrders.tsx b/frontend-customer/src/components/MyOrders.tsx
+index ca8597d..16566c3 100644
+--- a/frontend-customer/src/components/MyOrders.tsx
++++ b/frontend-customer/src/components/MyOrders.tsx
+@@ -1,7 +1,8 @@
+ import { useEffect, useMemo, useState } from 'react';
+-import { ChevronLeft, Loader2, Package, Star, CheckCircle2 } from 'lucide-react';
++import { ChevronLeft, Loader2, Package, CheckCircle2 } from 'lucide-react';
+ import type { Order } from '@/api/types';
+-import { orderApi, reviewApi, ApiError } from '@/api/client';
++import { orderApi, reviewApi } from '@/api/client';
++import ReviewForm from './ReviewForm';
+ 
+ interface MyOrdersProps {
+   onBack: () => void;
+@@ -16,64 +17,6 @@ const STATUS_LABEL: Record<string, string> = {
+   cancelled: 'Cancelled',
+ };
+ 
+-function ReviewForm({
+-  orderId,
+-  productId,
+-  onDone,
+-}: {
+-  orderId: number;
+-  productId: number;
+-  onDone: () => void;
+-}) {
+-  const [rating, setRating] = useState(5);
+-  const [comment, setComment] = useState('');
+-  const [saving, setSaving] = useState(false);
+-  const [error, setError] = useState('');
+-
+-  const submit = async () => {
+-    setSaving(true);
+-    setError('');
+-    try {
+-      await reviewApi.submit({ order_id: orderId, product_id: productId, rating, comment });
+-      onDone();
+-    } catch (err) {
+-      setError(err instanceof ApiError ? err.message : 'Could not submit review');
+-    } finally {
+-      setSaving(false);
+-    }
+-  };
+-
+-  return (
+-    <div className="mt-2 p-3 bg-gray-50 rounded-xl">
+-      <div className="flex items-center gap-1 mb-2">
+-        {[1, 2, 3, 4, 5].map((n) => (
+-          <button key={n} type="button" onClick={() => setRating(n)}>
+-            <Star
+-              className={`w-5 h-5 ${n <= rating ? 'fill-accent-400 text-accent-400' : 'text-gray-300'}`}
+-            />
+-          </button>
+-        ))}
+-      </div>
+-      <textarea
+-        value={comment}
+-        onChange={(e) => setComment(e.target.value)}
+-        placeholder="Share a few words about this item (optional)"
+-        rows={2}
+-        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-primary-200 resize-none"
+-      />
+-      {error && <p className="text-xs font-semibold text-red-600 mt-1">{error}</p>}
+-      <button
+-        onClick={submit}
+-        disabled={saving}
+-        className="mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold disabled:opacity-60"
+-      >
+-        {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+-        Submit review
+-      </button>
+-    </div>
+-  );
+-}
+-
+ export default function MyOrders({ onBack }: MyOrdersProps) {
+   const [orders, setOrders] = useState<Order[]>([]);
+   const [loading, setLoading] = useState(true);
+diff --git a/frontend-customer/src/components/ProductCard.tsx b/frontend-customer/src/components/ProductCard.tsx
+index 98f338f..750af0b 100644
+--- a/frontend-customer/src/components/ProductCard.tsx
++++ b/frontend-customer/src/components/ProductCard.tsx
+@@ -1,15 +1,16 @@
+ import { Star, Leaf, Plus, Check } from 'lucide-react';
+ import type { Product } from '@/types';
+-import { useEffect, useRef, useState } from 'react';
++import { useEffect, useRef, useState, type MouseEvent } from 'react';
+ import { trackProductView } from '@/api/client';
+ import { getViewerKey } from '@/lib/viewerKey';
+ 
+ interface ProductCardProps {
+   product: Product;
+   onAddToCart: (product: Product) => void;
++  onOpenDetail: (product: Product) => void;
+ }
+ 
+-export default function ProductCard({ product, onAddToCart }: ProductCardProps) {
++export default function ProductCard({ product, onAddToCart, onOpenDetail }: ProductCardProps) {
+   const [added, setAdded] = useState(false);
+   const discount = Math.round(((product.mrp - product.price) / product.mrp) * 100);
+   const cardRef = useRef<HTMLDivElement>(null);
+@@ -37,7 +38,8 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps)
+     return () => observer.disconnect();
+   }, [product.id]);
+ 
+-  const handleAdd = () => {
++  const handleAdd = (e: MouseEvent) => {
++    e.stopPropagation();
+     onAddToCart(product);
+     setAdded(true);
+     setTimeout(() => setAdded(false), 1200);
+@@ -51,7 +53,13 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps)
+   const stockLabel = product.stock <= 2 ? `Only ${product.stock} Left!` : 'In Stock';
+ 
+   return (
+-    <div ref={cardRef} className="group bg-white rounded-2xl border border-gray-100 shadow-soft hover:shadow-card transition-all duration-300 overflow-hidden flex flex-col">
++    <div
++      ref={cardRef}
++      onClick={() => onOpenDetail(product)}
++      role="button"
++      tabIndex={0}
++      className="group bg-white rounded-2xl border border-gray-100 shadow-soft hover:shadow-card transition-all duration-300 overflow-hidden flex flex-col cursor-pointer"
++    >
+       {/* Image */}
+       <div className="relative aspect-[4/3] overflow-hidden bg-gray-50">
+         <img
+diff --git a/frontend-customer/src/components/ProductDetailDrawer.tsx b/frontend-customer/src/components/ProductDetailDrawer.tsx
+new file mode 100644
+index 0000000..dd3a05a
+--- /dev/null
++++ b/frontend-customer/src/components/ProductDetailDrawer.tsx
+@@ -0,0 +1,208 @@
++import { useEffect, useState } from 'react';
++import { X, Star, Loader2, Plus, Check, MessageSquareText, Store } from 'lucide-react';
++import type { Product } from '@/types';
++import type { ProductReviewSummary, ReviewableItem } from '@/api/types';
++import { reviewApi } from '@/api/client';
++import { useAuth } from '@/context/AuthContext';
++import ReviewForm from './ReviewForm';
++
++interface ProductDetailDrawerProps {
++  product: Product | null;
++  onClose: () => void;
++  onAddToCart: (product: Product) => void;
++}
++
++// Opens when a product card is tapped. The star badge on the card only
++// ever showed the average - this is where a customer actually reads what
++// people wrote, and (if they've bought and received this exact item)
++// leaves their own review right from the product instead of having to
++// remember it's buried in My Orders.
++export default function ProductDetailDrawer({ product, onClose, onAddToCart }: ProductDetailDrawerProps) {
++  const { user } = useAuth();
++  const [summary, setSummary] = useState<ProductReviewSummary | null>(null);
++  const [loading, setLoading] = useState(false);
++  const [reviewableMatch, setReviewableMatch] = useState<ReviewableItem | null>(null);
++  const [added, setAdded] = useState(false);
++
++  const open = !!product;
++
++  useEffect(() => {
++    if (!product) return;
++    setLoading(true);
++    setSummary(null);
++    setReviewableMatch(null);
++
++    const loaders: Promise<void>[] = [reviewApi.forProduct(product.id).then(setSummary)];
++
++    // Only a logged-in customer can have a delivered order to review - and
++    // this list is small (their own pending reviews), so it's cheap to
++    // check on every open rather than plumbing eligibility through props.
++    if (user) {
++      loaders.push(
++        reviewApi.reviewable().then((items) => {
++          const match = items.find((i) => String(i.product_id) === product.id);
++          setReviewableMatch(match || null);
++        })
++      );
++    }
++
++    Promise.all(loaders).finally(() => setLoading(false));
++  }, [product, user]);
++
++  const handleAdd = () => {
++    if (!product) return;
++    onAddToCart(product);
++    setAdded(true);
++    setTimeout(() => setAdded(false), 1200);
++  };
++
++  const refreshAfterReview = () => {
++    if (!product) return;
++    setReviewableMatch(null);
++    reviewApi.forProduct(product.id).then(setSummary);
++  };
++
++  return (
++    <>
++      <div
++        className={`fixed inset-0 bg-black/30 z-50 transition-opacity duration-300 ${
++          open ? 'opacity-100' : 'opacity-0 pointer-events-none'
++        }`}
++        onClick={onClose}
++      />
++
++      <div
++        className={`fixed top-0 right-0 bottom-0 w-full max-w-md bg-white z-50 shadow-float flex flex-col transition-transform duration-300 ${
++          open ? 'translate-x-0' : 'translate-x-full'
++        }`}
++      >
++        {product && (
++          <>
++            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
++              <h3 className="font-display font-bold text-base text-gray-900 truncate pr-2">{product.name}</h3>
++              <button
++                onClick={onClose}
++                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors shrink-0"
++              >
++                <X className="w-4 h-4 text-gray-600" />
++              </button>
++            </div>
++
++            <div className="flex-1 overflow-y-auto scrollbar-thin">
++              <div className="p-5 space-y-4">
++                <div className="flex gap-3">
++                  <img
++                    src={product.image}
++                    alt={product.name}
++                    className="w-20 h-20 rounded-xl object-cover flex-shrink-0 bg-gray-50"
++                  />
++                  <div className="min-w-0">
++                    <p className="flex items-center gap-1 text-xs text-gray-400 font-medium mb-1">
++                      <Store className="w-3 h-3" /> {product.vendorName}
++                    </p>
++                    <div className="flex items-baseline gap-1.5 mb-1">
++                      <span className="font-display font-extrabold text-lg text-gray-900">₹{product.price}</span>
++                      <span className="text-xs text-gray-400 font-medium">/ {product.unit}</span>
++                    </div>
++                    {summary && summary.count > 0 ? (
++                      <div className="flex items-center gap-1">
++                        <Star className="w-3.5 h-3.5 fill-accent-400 text-accent-400" />
++                        <span className="text-xs font-bold text-gray-700">{summary.average}</span>
++                        <span className="text-[11px] text-gray-400">
++                          ({summary.count} review{summary.count === 1 ? '' : 's'})
++                        </span>
++                      </div>
++                    ) : (
++                      !loading && <span className="text-[11px] text-gray-400 font-medium">No reviews yet</span>
++                    )}
++                  </div>
++                </div>
++
++                <button
++                  onClick={handleAdd}
++                  disabled={product.stock === 0}
++                  className={`w-full flex items-center justify-center gap-2 py-3 rounded-2xl font-semibold text-sm shadow-soft transition-all active:scale-[0.98] ${
++                    added ? 'bg-primary-500 text-white' : 'bg-primary-600 hover:bg-primary-700 text-white'
++                  } ${product.stock === 0 ? 'opacity-40 cursor-not-allowed' : ''}`}
++                >
++                  {added ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
++                  {added ? 'Added to cart' : product.stock === 0 ? 'Out of stock' : 'Add to cart'}
++                </button>
++
++                <div className="border-t border-gray-100 pt-4">
++                  <h4 className="flex items-center gap-1.5 font-semibold text-sm text-gray-800 mb-3">
++                    <MessageSquareText className="w-4 h-4 text-gray-400" />
++                    Reviews
++                  </h4>
++
++                  {loading ? (
++                    <div className="flex items-center justify-center py-8 text-gray-400">
++                      <Loader2 className="w-5 h-5 animate-spin" />
++                    </div>
++                  ) : (
++                    <>
++                      {reviewableMatch && (
++                        <div className="mb-3">
++                          <p className="text-xs font-semibold text-primary-700 mb-1">You bought this - how was it?</p>
++                          <ReviewForm
++                            orderId={reviewableMatch.order_id}
++                            productId={reviewableMatch.product_id}
++                            onDone={refreshAfterReview}
++                          />
++                        </div>
++                      )}
++
++                      {!user && (
++                        <p className="text-xs text-gray-400 italic mb-3">
++                          Buy this item and, once it's delivered, you can come back here to leave a review.
++                        </p>
++                      )}
++
++                      {summary && summary.reviews.length > 0 ? (
++                        <ul className="space-y-3">
++                          {summary.reviews.map((r) => (
++                            <li key={r.id} className="border-b border-gray-50 last:border-0 pb-3 last:pb-0">
++                              <div className="flex items-center justify-between mb-1">
++                                <span className="text-sm font-semibold text-gray-800">{r.customer_name}</span>
++                                <div className="flex items-center gap-0.5">
++                                  {[1, 2, 3, 4, 5].map((n) => (
++                                    <Star
++                                      key={n}
++                                      className={`w-3 h-3 ${
++                                        n <= r.rating ? 'fill-accent-400 text-accent-400' : 'text-gray-200'
++                                      }`}
++                                    />
++                                  ))}
++                                </div>
++                              </div>
++                              {r.comment && <p className="text-sm text-gray-600">{r.comment}</p>}
++                              <p className="text-[11px] text-gray-300 mt-0.5">
++                                {new Date(r.created_at).toLocaleDateString()}
++                              </p>
++                              {r.vendor_reply && (
++                                <div className="mt-1.5 ml-2 pl-2.5 border-l-2 border-primary-200">
++                                  <p className="text-[11px] font-semibold text-primary-700">
++                                    Reply from {product.vendorName}
++                                  </p>
++                                  <p className="text-xs text-gray-600">{r.vendor_reply}</p>
++                                </div>
++                              )}
++                            </li>
++                          ))}
++                        </ul>
++                      ) : (
++                        !reviewableMatch && (
++                          <p className="text-sm text-gray-400 italic">Be the first to review this item.</p>
++                        )
++                      )}
++                    </>
++                  )}
++                </div>
++              </div>
++            </div>
++          </>
++        )}
++      </div>
++    </>
++  );
++}
+diff --git a/frontend-customer/src/components/ReviewForm.tsx b/frontend-customer/src/components/ReviewForm.tsx
+new file mode 100644
+index 0000000..d571321
+--- /dev/null
++++ b/frontend-customer/src/components/ReviewForm.tsx
+@@ -0,0 +1,57 @@
++import { useState } from 'react';
++import { Star, Loader2 } from 'lucide-react';
++import { reviewApi, ApiError } from '@/api/client';
++
++interface ReviewFormProps {
++  orderId: number;
++  productId: number;
++  onDone: () => void;
++}
++
++export default function ReviewForm({ orderId, productId, onDone }: ReviewFormProps) {
++  const [rating, setRating] = useState(5);
++  const [comment, setComment] = useState('');
++  const [saving, setSaving] = useState(false);
++  const [error, setError] = useState('');
++
++  const submit = async () => {
++    setSaving(true);
++    setError('');
++    try {
++      await reviewApi.submit({ order_id: orderId, product_id: productId, rating, comment });
++      onDone();
++    } catch (err) {
++      setError(err instanceof ApiError ? err.message : 'Could not submit review');
++    } finally {
++      setSaving(false);
++    }
++  };
++
++  return (
++    <div className="mt-2 p-3 bg-gray-50 rounded-xl">
++      <div className="flex items-center gap-1 mb-2">
++        {[1, 2, 3, 4, 5].map((n) => (
++          <button key={n} type="button" onClick={() => setRating(n)}>
++            <Star className={`w-5 h-5 ${n <= rating ? 'fill-accent-400 text-accent-400' : 'text-gray-300'}`} />
++          </button>
++        ))}
++      </div>
++      <textarea
++        value={comment}
++        onChange={(e) => setComment(e.target.value)}
++        placeholder="Share a few words about this item (optional)"
++        rows={2}
++        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-primary-200 resize-none"
++      />
++      {error && <p className="text-xs font-semibold text-red-600 mt-1">{error}</p>}
++      <button
++        onClick={submit}
++        disabled={saving}
++        className="mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold disabled:opacity-60"
++      >
++        {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
++        Submit review
++      </button>
++    </div>
++  );
++}
+diff --git a/frontend-vendor/src/api/client.ts b/frontend-vendor/src/api/client.ts
+index 0fa7582..1eb8d3b 100644
+--- a/frontend-vendor/src/api/client.ts
++++ b/frontend-vendor/src/api/client.ts
+@@ -116,4 +116,12 @@ export const pricingApi = {
+   history: () => api.get<PricingHistoryResponse>('/pricing/history'),
+ };
+ 
++// --- Reviews inbox (plain list + reply, separate from Word Analysis/Smart Pricing) ---
++import type { VendorReviewsResponse, VendorReview } from './types';
++
++export const reviewsApi = {
++  mine: () => api.get<VendorReviewsResponse>('/reviews/mine'),
++  reply: (reviewId: number, reply: string) => api.put<VendorReview>(`/reviews/${reviewId}/reply`, { reply }),
++};
++
+ export { API_URL };
+diff --git a/frontend-vendor/src/api/types.ts b/frontend-vendor/src/api/types.ts
+index 1f772b0..bf31c69 100644
+--- a/frontend-vendor/src/api/types.ts
++++ b/frontend-vendor/src/api/types.ts
+@@ -396,3 +396,21 @@ export interface PriceChangeLogEntry {
+ export interface PricingHistoryResponse {
+   history: PriceChangeLogEntry[];
+ }
++
++// --- Reviews inbox ---
++
++export interface VendorReview {
++  id: number;
++  rating: number;
++  comment: string;
++  created_at: string;
++  vendor_reply: string | null;
++  vendor_reply_at: string | null;
++  product_id: number;
++  product_name: string;
++  customer_name: string;
++}
++
++export interface VendorReviewsResponse {
++  reviews: VendorReview[];
++}
+diff --git a/frontend-vendor/src/components/SmartPricing.tsx b/frontend-vendor/src/components/SmartPricing.tsx
+index 426ab8d..6363293 100644
+--- a/frontend-vendor/src/components/SmartPricing.tsx
++++ b/frontend-vendor/src/components/SmartPricing.tsx
+@@ -115,7 +115,7 @@ export default function SmartPricing() {
+             }`}
+           >
+             <span
+-              className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${
++              className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-[white] transition-transform ${
+                 enabled ? 'translate-x-4' : ''
+               }`}
+             />
+diff --git a/frontend-vendor/src/components/VendorDashboard.tsx b/frontend-vendor/src/components/VendorDashboard.tsx
+index b95e376..5c5edfa 100644
+--- a/frontend-vendor/src/components/VendorDashboard.tsx
++++ b/frontend-vendor/src/components/VendorDashboard.tsx
+@@ -14,6 +14,7 @@ import {
+   Calculator,
+   Swords,
+   IndianRupee,
++  MessageSquareText,
+ } from 'lucide-react';
+ import { useCallback, useEffect, useState } from 'react';
+ import { api, ApiError } from '@/api/client';
+@@ -47,8 +48,9 @@ import BusinessReport from './BusinessReport';
+ import FinancialCalculator from './FinancialCalculator';
+ import WordAnalysis from './WordAnalysis';
+ import SmartPricing from './SmartPricing';
++import VendorReviews from './VendorReviews';
+ 
+-type Tab = 'overview' | 'inventory' | 'orders' | 'insights' | 'wards' | 'report' | 'finance' | 'words' | 'pricing';
++type Tab = 'overview' | 'inventory' | 'orders' | 'insights' | 'wards' | 'report' | 'finance' | 'words' | 'pricing' | 'reviews';
+ 
+ const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
+   pending: 'confirmed',
+@@ -198,6 +200,7 @@ export default function VendorDashboard() {
+     { key: 'finance', label: 'Financial Calculator', icon: Calculator, badge: 0 },
+     { key: 'words', label: 'Word Analysis', icon: Swords, badge: 0 },
+     { key: 'pricing', label: 'Smart Pricing', icon: IndianRupee, badge: 0 },
++    { key: 'reviews', label: 'Reviews', icon: MessageSquareText, badge: 0 },
+   ] as const;
+ 
+   return (
+@@ -498,6 +501,12 @@ export default function VendorDashboard() {
+             <SmartPricing />
+           </div>
+         )}
++
++        {tab === 'reviews' && (
++          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-soft p-5">
++            <VendorReviews />
++          </div>
++        )}
+         </div>
+       </div>
+     </div>
+diff --git a/frontend-vendor/src/components/VendorReviews.tsx b/frontend-vendor/src/components/VendorReviews.tsx
+new file mode 100644
+index 0000000..04442ae
+--- /dev/null
++++ b/frontend-vendor/src/components/VendorReviews.tsx
+@@ -0,0 +1,177 @@
++import { useEffect, useState } from 'react';
++import { Star, Loader2, AlertTriangle, MessageSquareReply, Send } from 'lucide-react';
++import { ApiError, reviewsApi } from '@/api/client';
++import type { VendorReview } from '@/api/types';
++
++// The plain reviews inbox - separate from Word Analysis (phrase mining) and
++// Smart Pricing (quality-signal detection), which both read this same
++// review data but only ever show a derived summary. This is just: here's
++// what people rated and wrote, in order, with a place to reply.
++
++function Stars({ rating }: { rating: number }) {
++  return (
++    <div className="flex items-center gap-0.5">
++      {[1, 2, 3, 4, 5].map((n) => (
++        <Star key={n} className={`w-3.5 h-3.5 ${n <= rating ? 'fill-accent-400 text-accent-400' : 'text-gray-200 dark:text-gray-600'}`} />
++      ))}
++    </div>
++  );
++}
++
++function ReplyBox({ review, onSaved }: { review: VendorReview; onSaved: (updated: VendorReview) => void }) {
++  const [open, setOpen] = useState(false);
++  const [text, setText] = useState(review.vendor_reply || '');
++  const [saving, setSaving] = useState(false);
++  const [error, setError] = useState('');
++
++  const save = async () => {
++    setSaving(true);
++    setError('');
++    try {
++      const updated = await reviewsApi.reply(review.id, text);
++      onSaved(updated);
++      setOpen(false);
++    } catch (err) {
++      setError(err instanceof ApiError ? err.message : 'Could not save your reply');
++    } finally {
++      setSaving(false);
++    }
++  };
++
++  if (!open) {
++    return review.vendor_reply ? (
++      <div className="mt-2 ml-2 pl-2.5 border-l-2 border-accent-200 dark:border-accent-800">
++        <p className="text-xs font-semibold text-accent-700 dark:text-accent-400">Your reply</p>
++        <p className="text-sm text-gray-600 dark:text-gray-300">{review.vendor_reply}</p>
++        <button
++          onClick={() => setOpen(true)}
++          className="text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 mt-1"
++        >
++          Edit reply
++        </button>
++      </div>
++    ) : (
++      <button
++        onClick={() => setOpen(true)}
++        className="flex items-center gap-1 text-xs font-semibold text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 mt-2"
++      >
++        <MessageSquareReply size={13} />
++        Reply
++      </button>
++    );
++  }
++
++  return (
++    <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-xl">
++      <textarea
++        value={text}
++        onChange={(e) => setText(e.target.value)}
++        placeholder="Write a public reply to this review..."
++        rows={2}
++        className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 text-sm outline-none focus:ring-2 focus:ring-accent-200 resize-none"
++      />
++      {error && <p className="text-xs font-semibold text-red-600 dark:text-red-400 mt-1">{error}</p>}
++      <div className="flex items-center gap-2 mt-2">
++        <button
++          onClick={save}
++          disabled={saving}
++          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-white text-xs font-semibold disabled:opacity-60"
++        >
++          {saving ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
++          Save reply
++        </button>
++        <button
++          onClick={() => {
++            setOpen(false);
++            setText(review.vendor_reply || '');
++          }}
++          className="px-3 py-1.5 rounded-lg text-gray-500 dark:text-gray-400 text-xs font-medium hover:bg-gray-100 dark:hover:bg-gray-700"
++        >
++          Cancel
++        </button>
++      </div>
++    </div>
++  );
++}
++
++export default function VendorReviews() {
++  const [reviews, setReviews] = useState<VendorReview[]>([]);
++  const [loading, setLoading] = useState(true);
++  const [error, setError] = useState<string | null>(null);
++
++  const load = () => {
++    setLoading(true);
++    setError(null);
++    reviewsApi
++      .mine()
++      .then((data) => setReviews(data.reviews))
++      .catch((err) => setError(err instanceof ApiError ? err.message : 'Could not load reviews'))
++      .finally(() => setLoading(false));
++  };
++
++  useEffect(load, []);
++
++  const updateOne = (updated: VendorReview) => {
++    setReviews((prev) => prev.map((r) => (r.id === updated.id ? { ...r, ...updated } : r)));
++  };
++
++  const avg = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0;
++
++  return (
++    <div className="space-y-4">
++      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-soft p-4">
++        <h2 className="font-semibold text-gray-800 dark:text-gray-100 mb-1">Reviews</h2>
++        <p className="text-xs text-gray-500 dark:text-gray-400">
++          Everything customers have rated and written about your products, newest first.
++        </p>
++      </div>
++
++      {!loading && reviews.length > 0 && (
++        <div className="grid grid-cols-2 gap-3">
++          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-soft p-3 text-center">
++            <div className="text-2xl font-bold text-gray-800 dark:text-gray-100">{avg.toFixed(1)}</div>
++            <div className="text-xs text-gray-500 dark:text-gray-400">average rating</div>
++          </div>
++          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-soft p-3 text-center">
++            <div className="text-2xl font-bold text-gray-800 dark:text-gray-100">{reviews.length}</div>
++            <div className="text-xs text-gray-500 dark:text-gray-400">total reviews</div>
++          </div>
++        </div>
++      )}
++
++      {error && (
++        <div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 text-sm rounded-lg p-3">
++          <AlertTriangle size={16} /> {error}
++        </div>
++      )}
++
++      {loading ? (
++        <div className="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-soft p-4">
++          <Loader2 size={16} className="animate-spin" /> Loading reviews...
++        </div>
++      ) : reviews.length === 0 ? (
++        <p className="text-sm text-gray-400 dark:text-gray-500 italic bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-soft p-4">
++          No reviews yet - they'll show up here once customers start rating delivered orders.
++        </p>
++      ) : (
++        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-soft p-4">
++          <ul className="space-y-3">
++            {reviews.map((r) => (
++              <li key={r.id} className="border-b border-gray-50 dark:border-gray-700 last:border-0 pb-3 last:pb-0">
++                <div className="flex items-center justify-between gap-2 mb-1">
++                  <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">{r.product_name}</span>
++                  <Stars rating={r.rating} />
++                </div>
++                <p className="text-xs text-gray-400 dark:text-gray-500 mb-1">
++                  {r.customer_name} · {new Date(r.created_at).toLocaleDateString()}
++                </p>
++                {r.comment && <p className="text-sm text-gray-600 dark:text-gray-300">{r.comment}</p>}
++                <ReplyBox review={r} onSaved={updateOne} />
++              </li>
++            ))}
++          </ul>
++        </div>
++      )}
++    </div>
++  );
++}

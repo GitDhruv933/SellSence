@@ -79,6 +79,19 @@ export const businessReportApi = {
   },
 };
 
+// --- Module 3: Smart Competitor Word Analysis ---
+import type { OwnWordAnalysis, RivalsResponse, CompetitorWordAnalysis, ExternalWordAnalysis } from './types';
+
+export const wordAnalysisApi = {
+  own: (ratingMax?: number) =>
+    api.get<OwnWordAnalysis>(`/word-analysis/own${ratingMax ? `?rating_max=${ratingMax}` : ''}`),
+  rivals: () => api.get<RivalsResponse>('/word-analysis/rivals'),
+  vendor: (vendorId: number, ratingMax?: number) =>
+    api.get<CompetitorWordAnalysis>(`/word-analysis/vendor/${vendorId}${ratingMax ? `?rating_max=${ratingMax}` : ''}`),
+  external: (text: string, sourceLabel?: string) =>
+    api.post<ExternalWordAnalysis>('/word-analysis/external', { text, source_label: sourceLabel }),
+};
+
 // --- Module 2: Smart Financial Calculator ---
 export const financialCalculatorApi = {
   estimate: (body: {
@@ -91,6 +104,16 @@ export const financialCalculatorApi = {
     working_capital_cycle_months?: number;
     micro_finance_max_project_cost?: number;
   }) => api.post<FinancialEstimate>('/financial-calculator/estimate', body),
+};
+
+// --- Module 4: Smart Pricing ---
+import type { PricingSuggestionsResponse, PricingApplyResponse, PricingHistoryResponse } from './types';
+
+export const pricingApi = {
+  suggestions: () => api.get<PricingSuggestionsResponse>('/pricing/suggestions'),
+  apply: (productId: number, newPrice: number, reason?: string) =>
+    api.post<PricingApplyResponse>('/pricing/apply', { product_id: productId, new_price: newPrice, reason }),
+  history: () => api.get<PricingHistoryResponse>('/pricing/history'),
 };
 
 export { API_URL };

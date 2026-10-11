@@ -91,22 +91,22 @@ export default function InventoryTable({ products, onAdd, onUpdate, onDelete }: 
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-soft overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-soft overflow-hidden">
       {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 border-b border-gray-100">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 border-b border-gray-100 dark:border-gray-700">
         <div>
-          <h3 className="font-display font-bold text-base text-gray-900">Inventory Manager</h3>
-          <p className="text-xs text-gray-400 font-medium mt-0.5">{filtered.length} products in catalog</p>
+          <h3 className="font-display font-bold text-base text-gray-900 dark:text-gray-100">Inventory Manager</h3>
+          <p className="text-xs text-gray-400 dark:text-gray-500 font-medium mt-0.5">{filtered.length} products in catalog</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative flex-1 sm:flex-none">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search products..."
-              className="w-full sm:w-56 pl-9 pr-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-sm font-medium outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-300 transition-all"
+              className="w-full sm:w-56 pl-9 pr-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 text-sm font-medium outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-300 transition-all"
             />
           </div>
           <button
@@ -120,25 +120,25 @@ export default function InventoryTable({ products, onAdd, onUpdate, onDelete }: 
       </div>
 
       {adding && (
-        <form onSubmit={submitAdd} className="grid grid-cols-2 sm:grid-cols-6 gap-2 p-4 bg-gray-50 border-b border-gray-100">
+        <form onSubmit={submitAdd} className="grid grid-cols-2 sm:grid-cols-6 gap-2 p-4 bg-gray-50 dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700">
           <input
             required
             placeholder="Name"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
-            className="col-span-2 sm:col-span-2 px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-primary-200"
+            className="col-span-2 sm:col-span-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-sm outline-none focus:ring-2 focus:ring-primary-200"
           />
           <input
             placeholder="Category"
             value={form.category}
             onChange={(e) => setForm({ ...form, category: e.target.value })}
-            className="px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-primary-200"
+            className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-sm outline-none focus:ring-2 focus:ring-primary-200"
           />
           <input
             placeholder="Unit"
             value={form.unit}
             onChange={(e) => setForm({ ...form, unit: e.target.value })}
-            className="px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-primary-200"
+            className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-sm outline-none focus:ring-2 focus:ring-primary-200"
           />
           <input
             type="number"
@@ -147,7 +147,7 @@ export default function InventoryTable({ products, onAdd, onUpdate, onDelete }: 
             placeholder="Cost ₹"
             value={form.cost_price || ''}
             onChange={(e) => setForm({ ...form, cost_price: Number(e.target.value) })}
-            className="px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-primary-200"
+            className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-sm outline-none focus:ring-2 focus:ring-primary-200"
           />
           <input
             type="number"
@@ -156,7 +156,7 @@ export default function InventoryTable({ products, onAdd, onUpdate, onDelete }: 
             placeholder="Price ₹"
             value={form.selling_price || ''}
             onChange={(e) => setForm({ ...form, selling_price: Number(e.target.value) })}
-            className="px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-primary-200"
+            className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-sm outline-none focus:ring-2 focus:ring-primary-200"
           />
           <input
             type="number"
@@ -164,7 +164,7 @@ export default function InventoryTable({ products, onAdd, onUpdate, onDelete }: 
             placeholder="Stock qty"
             value={form.quantity || ''}
             onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })}
-            className="px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-primary-200"
+            className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-sm outline-none focus:ring-2 focus:ring-primary-200"
           />
           <input
             type="number"
@@ -172,14 +172,14 @@ export default function InventoryTable({ products, onAdd, onUpdate, onDelete }: 
             placeholder="Reorder level"
             value={form.reorder_level || ''}
             onChange={(e) => setForm({ ...form, reorder_level: Number(e.target.value) })}
-            className="px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-primary-200"
+            className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-sm outline-none focus:ring-2 focus:ring-primary-200"
           />
           <input
             type="text"
             placeholder="Image URL (optional)"
             value={form.image_url}
             onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-            className="col-span-2 sm:col-span-5 px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-primary-200"
+            className="col-span-2 sm:col-span-5 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-sm outline-none focus:ring-2 focus:ring-primary-200"
           />
           <div className="col-span-2 sm:col-span-1 flex items-center gap-2">
             <button
@@ -192,7 +192,7 @@ export default function InventoryTable({ products, onAdd, onUpdate, onDelete }: 
             <button
               type="button"
               onClick={() => setAdding(false)}
-              className="px-3 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700"
+              className="px-3 py-2 rounded-lg bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200"
             >
               <X className="w-4 h-4" />
             </button>
@@ -204,12 +204,12 @@ export default function InventoryTable({ products, onAdd, onUpdate, onDelete }: 
       <div className="overflow-x-auto scrollbar-thin">
         <table className="w-full">
           <thead>
-            <tr className="bg-gray-50 border-b border-gray-100">
-              <th className="text-left text-xs font-bold text-gray-400 uppercase tracking-wide px-4 py-3">Product Name</th>
-              <th className="text-left text-xs font-bold text-gray-400 uppercase tracking-wide px-4 py-3">Category</th>
-              <th className="text-right text-xs font-bold text-gray-400 uppercase tracking-wide px-4 py-3">Price</th>
-              <th className="text-center text-xs font-bold text-gray-400 uppercase tracking-wide px-4 py-3">Stock</th>
-              <th className="text-center text-xs font-bold text-gray-400 uppercase tracking-wide px-4 py-3">Actions</th>
+            <tr className="bg-gray-50 dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700">
+              <th className="text-left text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide px-4 py-3">Product Name</th>
+              <th className="text-left text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide px-4 py-3">Category</th>
+              <th className="text-right text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide px-4 py-3">Price</th>
+              <th className="text-center text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide px-4 py-3">Stock</th>
+              <th className="text-center text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide px-4 py-3">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -219,10 +219,10 @@ export default function InventoryTable({ products, onAdd, onUpdate, onDelete }: 
               const hasImageError = failedImages[product.id];
 
               return (
-                <tr key={product.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                <tr key={product.id} className="border-b border-gray-50 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
+                      <div className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-700 overflow-hidden flex-shrink-0">
                         {product.image_url && !hasImageError ? (
                           <img
                             src={product.image_url}
@@ -231,19 +231,19 @@ export default function InventoryTable({ products, onAdd, onUpdate, onDelete }: 
                             onError={() => handleImageError(product.id)}
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-400 font-bold">
+                          <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-400 dark:text-gray-500 font-bold">
                             {product.name.slice(0, 2).toUpperCase()}
                           </div>
                         )}
                       </div>
                       <div>
-                        <p className="font-semibold text-sm text-gray-900 truncate">{product.name}</p>
-                        <p className="text-xs text-gray-400">{product.unit}</p>
+                        <p className="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate">{product.name}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">{product.unit}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-xs font-medium text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full">
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-2.5 py-1 rounded-full">
                       {product.category || 'General'}
                     </span>
                   </td>
@@ -254,10 +254,10 @@ export default function InventoryTable({ products, onAdd, onUpdate, onDelete }: 
                         step="0.01"
                         value={editValues.selling_price}
                         onChange={(e) => setEditValues({ ...editValues, selling_price: Number(e.target.value) })}
-                        className="w-20 px-2 py-1 rounded-lg border border-gray-200 text-sm text-right outline-none focus:ring-2 focus:ring-primary-200"
+                        className="w-20 px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-600 text-sm text-right outline-none focus:ring-2 focus:ring-primary-200"
                       />
                     ) : (
-                      <span className="font-display font-bold text-sm text-gray-900">₹{product.selling_price}</span>
+                      <span className="font-display font-bold text-sm text-gray-900 dark:text-gray-100">₹{product.selling_price}</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-center">
@@ -266,12 +266,12 @@ export default function InventoryTable({ products, onAdd, onUpdate, onDelete }: 
                         type="number"
                         value={editValues.quantity}
                         onChange={(e) => setEditValues({ ...editValues, quantity: Number(e.target.value) })}
-                        className="w-20 px-2 py-1 rounded-lg border border-gray-200 text-sm text-center outline-none focus:ring-2 focus:ring-primary-200"
+                        className="w-20 px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-600 text-sm text-center outline-none focus:ring-2 focus:ring-primary-200"
                       />
                     ) : (
                       <span
                         className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${
-                          lowStock ? 'bg-amber-50 text-amber-700' : 'bg-primary-50 text-primary-700'
+                          lowStock ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300' : 'bg-primary-50 text-primary-700'
                         }`}
                       >
                         {product.quantity} {lowStock && 'low!'}
@@ -291,7 +291,7 @@ export default function InventoryTable({ products, onAdd, onUpdate, onDelete }: 
                           </button>
                           <button
                             onClick={() => setEditingId(null)}
-                            className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center"
+                            className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 flex items-center justify-center"
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
@@ -300,13 +300,13 @@ export default function InventoryTable({ products, onAdd, onUpdate, onDelete }: 
                         <>
                           <button
                             onClick={() => startEdit(product)}
-                            className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center"
+                            className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 flex items-center justify-center"
                           >
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => onDelete(product.id)}
-                            className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center"
+                            className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-500 flex items-center justify-center"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -319,7 +319,7 @@ export default function InventoryTable({ products, onAdd, onUpdate, onDelete }: 
             })}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-sm text-gray-400">
+                <td colSpan={5} className="px-4 py-10 text-center text-sm text-gray-400 dark:text-gray-500">
                   No products yet. Add your first item to get started.
                 </td>
               </tr>

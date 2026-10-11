@@ -16,6 +16,8 @@ const wardAnalysisRoutes = require('./routes/wardAnalysis');
 const businessReportRoutes = require('./routes/businessReport');
 const financialCalculatorRoutes = require('./routes/financialCalculator');
 const reviewRoutes = require('./routes/reviews');
+const wordAnalysisRoutes = require('./routes/wordAnalysis');
+const pricingRoutes = require('./routes/pricing');
 
 const app = express();
 app.use(cors());
@@ -36,6 +38,8 @@ app.use('/ward-analysis', wardAnalysisRoutes);
 app.use('/business-report', businessReportRoutes);
 app.use('/financial-calculator', financialCalculatorRoutes);
 app.use('/reviews', reviewRoutes);
+app.use('/word-analysis', wordAnalysisRoutes);
+app.use('/pricing', pricingRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err);

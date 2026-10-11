@@ -21,7 +21,7 @@ function PieChart({ data, title }: { data: Record<string, unknown>[]; title: str
 
   return (
     <div className="mt-3">
-      <p className="text-xs font-bold text-gray-500 mb-2">{title}</p>
+      <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">{title}</p>
       <div className="flex items-center gap-4">
         <svg viewBox={`0 0 ${size} ${size}`} className="w-24 h-24 -rotate-90 flex-shrink-0">
           {data.map((d, i) => {
@@ -50,9 +50,9 @@ function PieChart({ data, title }: { data: Record<string, unknown>[]; title: str
             <div key={i} className="flex items-center justify-between text-[11px]">
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                <span className="text-gray-600 truncate max-w-[100px]">{String(d.name)}</span>
+                <span className="text-gray-600 dark:text-gray-300 truncate max-w-[100px]">{String(d.name)}</span>
               </div>
-              <span className="text-gray-400 font-semibold">{formatCurrency(Number(d.value) || 0)}</span>
+              <span className="text-gray-400 dark:text-gray-500 font-semibold">{formatCurrency(Number(d.value) || 0)}</span>
             </div>
           ))}
         </div>
@@ -65,7 +65,7 @@ function BarChart({ data, title }: { data: Record<string, unknown>[]; title: str
   const maxVal = Math.max(1, ...data.map(d => Math.max(Number(d.revenue) || 0, Number(d.profit) || 0)));
   return (
     <div className="mt-3">
-      <p className="text-xs font-bold text-gray-500 mb-2">{title}</p>
+      <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">{title}</p>
       <div className="space-y-2">
         {data.map((d, i) => {
           const rev = Number(d.revenue) || 0;
@@ -73,14 +73,14 @@ function BarChart({ data, title }: { data: Record<string, unknown>[]; title: str
           return (
             <div key={i}>
               <div className="flex items-center justify-between text-[11px] mb-0.5">
-                <span className="text-gray-600 truncate max-w-[120px]">{String(d.name)}</span>
-                <span className="text-gray-400">{formatCurrency(rev)}</span>
+                <span className="text-gray-600 dark:text-gray-300 truncate max-w-[120px]">{String(d.name)}</span>
+                <span className="text-gray-400 dark:text-gray-500">{formatCurrency(rev)}</span>
               </div>
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden flex">
+              <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden flex">
                 <div className="h-full bg-primary-500 rounded-full" style={{ width: `${(rev / maxVal) * 100}%` }} />
               </div>
               {profit !== rev && (
-                <div className="text-[10px] text-gray-400 mt-0.5">Profit: {formatCurrency(profit)}</div>
+                <div className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">Profit: {formatCurrency(profit)}</div>
               )}
             </div>
           );
@@ -106,7 +106,7 @@ function LineChart({ data, title }: { data: Record<string, unknown>[]; title: st
 
   return (
     <div className="mt-3">
-      <p className="text-xs font-bold text-gray-500 mb-2">{title}</p>
+      <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">{title}</p>
       <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-32" preserveAspectRatio="none">
         <defs>
           <linearGradient id="aiLineGrad" x1="0" y1="0" x2="0" y2="1">
@@ -117,7 +117,7 @@ function LineChart({ data, title }: { data: Record<string, unknown>[]; title: st
         <polygon points={`${padding},${height} ${points} ${width - padding},${height}`} fill="url(#aiLineGrad)" />
         <polyline points={points} fill="none" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
-      <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+      <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-500 mt-1">
         <span>{String(data[0]?.date).slice(5)}</span>
         <span>{String(data[data.length - 1]?.date).slice(5)}</span>
       </div>

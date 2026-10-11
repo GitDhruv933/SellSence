@@ -19,6 +19,11 @@
     font-family: 'DM Sans', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .dark body {
+    color-scheme: dark;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -39,6 +44,9 @@
     scrollbar-width: thin;
     scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
   }
+  .dark .scrollbar-thin {
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+  }
   .scrollbar-thin::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -46,6 +54,9 @@
   .scrollbar-thin::-webkit-scrollbar-thumb {
     background-color: rgba(0, 0, 0, 0.15);
     border-radius: 9999px;
+  }
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.15);
   }
 
   .animate-fade-in {

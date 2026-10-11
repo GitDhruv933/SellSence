@@ -1,6 +1,6 @@
 import { LogOut, ShoppingBag } from 'lucide-react';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
-import Navbar from '@/components/Navbar';
+import { ThemeProvider } from '@/context/ThemeContext';
 import VendorDashboard from '@/components/VendorDashboard';
 import AuthScreen from '@/components/AuthScreen';
 
@@ -10,13 +10,13 @@ import AuthScreen from '@/components/AuthScreen';
 function WrongRoleScreen() {
   const { logout } = useAuth();
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
       <div className="text-center max-w-sm">
         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-soft mx-auto mb-4">
           <ShoppingBag className="w-7 h-7 text-white" />
         </div>
-        <h2 className="font-display font-bold text-lg text-gray-900 mb-1">This is the vendor site</h2>
-        <p className="text-sm text-gray-500 mb-5">
+        <h2 className="font-display font-bold text-lg text-gray-900 dark:text-gray-100 mb-1">This is the vendor site</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
           Your account is registered as a customer. Please use the customer site to shop.
         </p>
         <button
@@ -32,22 +32,19 @@ function WrongRoleScreen() {
 
 function Gate() {
   const { user, loading } = useAuth();
-  if (loading) return <div className="min-h-screen bg-gray-50" />;
+  if (loading) return <div className="min-h-screen bg-gray-50 dark:bg-gray-900" />;
   if (!user) return <AuthScreen />;
   if (user.role !== 'vendor') return <WrongRoleScreen />;
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <VendorDashboard />
-    </div>
-  );
+  return <VendorDashboard />;
 }
 
 function App() {
   return (
-    <AuthProvider>
-      <Gate />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <Gate />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

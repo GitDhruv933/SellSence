@@ -62,4 +62,18 @@ export const reviewApi = {
     api.post(`/reviews`, body),
 };
 
+// --- Smart Pricing: view tracking ---
+// Fire-and-forget - a missed ping just means one fewer view counted, never
+// worth surfacing an error to the customer for. Uses fetch directly (not
+// the request() helper above) since /pricing/track-view doesn't require -
+// or want - an Authorization header; it needs to work for browsing
+// customers who haven't logged in yet.
+export function trackProductView(productId: number | string, viewerKey: string) {
+  fetch(`${API_URL}/pricing/track-view`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ product_id: Number(productId), viewer_key: viewerKey }),
+  }).catch(() => {});
+}
+
 export { API_URL };

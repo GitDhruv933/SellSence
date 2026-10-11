@@ -71,7 +71,7 @@ function WardMap({ wards }: { wards: Ward[] }) {
   const allPoints = withBoundary.flatMap((w) => outerRings(w.boundary_geojson).flat());
   if (allPoints.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-2 text-center py-12 text-gray-400 text-sm">
+      <div className="flex flex-col items-center justify-center gap-2 text-center py-12 text-gray-400 dark:text-gray-500 text-sm">
         <MapIcon className="w-8 h-8" />
         No ward boundaries attached yet. Paste GeoJSON for a ward below to see it here.
       </div>
@@ -104,7 +104,7 @@ function WardMap({ wards }: { wards: Ward[] }) {
       .join(' ') + ' Z';
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto bg-gray-50 rounded-xl border border-gray-100">
+    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-700">
       {withBoundary.map((w) => {
         const color = (w.category && CATEGORY_COLORS[w.category]) || '#cbd5e1';
         return outerRings(w.boundary_geojson).map((ring, i) => (
@@ -245,7 +245,7 @@ export default function WardAnalysis() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-6 h-6 text-gray-300 animate-spin" />
+        <Loader2 className="w-6 h-6 text-gray-300 dark:text-gray-600 animate-spin" />
       </div>
     );
   }
@@ -253,8 +253,8 @@ export default function WardAnalysis() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h3 className="font-display font-bold text-lg text-gray-900 mb-1">Ward market-expansion analysis</h3>
-        <p className="text-sm text-gray-400">
+        <h3 className="font-display font-bold text-lg text-gray-900 dark:text-gray-100 mb-1">Ward market-expansion analysis</h3>
+        <p className="text-sm text-gray-400 dark:text-gray-500">
           Mark your target ward, add up to 24 comparison wards with their indicators, then run the
           classification. Boundary GeoJSON (Step 1, from Earth Engine) is optional per ward but needed
           for the map at the bottom.
@@ -262,22 +262,22 @@ export default function WardAnalysis() {
       </div>
 
       {error && (
-        <div className="flex items-start gap-2 bg-red-50 border border-red-100 text-red-700 text-sm rounded-xl p-3">
+        <div className="flex items-start gap-2 bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-800 text-red-700 dark:text-red-300 text-sm rounded-xl p-3">
           <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {targetCount !== 1 && (
-        <div className="flex items-start gap-2 bg-amber-50 border border-amber-100 text-amber-700 text-sm rounded-xl p-3">
+        <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-sm rounded-xl p-3">
           <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
           <span>Pick exactly one ward as the target (use the radio button in the first column).</span>
         </div>
       )}
 
-      <div className="overflow-x-auto border border-gray-100 rounded-xl">
+      <div className="overflow-x-auto border border-gray-100 dark:border-gray-700 rounded-xl">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-500">
+          <thead className="bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-400">
             <tr>
               <th className="px-3 py-2 text-left font-semibold">Target</th>
               <th className="px-3 py-2 text-left font-semibold">Ward name</th>
@@ -289,12 +289,12 @@ export default function WardAnalysis() {
               <th className="px-3 py-2" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
             {wards.map((w) => (
               <tr key={w._localId}>
              <td className="px-3 py-2">
   <select
-    className="w-36 rounded-lg border border-gray-200 px-2 py-1 text-sm bg-white"
+    className="w-36 rounded-lg border border-gray-200 dark:border-gray-600 px-2 py-1 text-sm bg-white dark:bg-gray-800"
     value={w.name ?? ''}
     onChange={(e) => {
       const picked = WARD_CATALOG.find((c) => c.name === e.target.value);
@@ -322,7 +322,7 @@ export default function WardAnalysis() {
                   <td key={f.key} className="px-3 py-2">
                     <input
   type="number"
-  className={`w-24 rounded-lg border border-gray-200 px-2 py-1 ${w.name && WARD_CATALOG.some(c => c.name === w.name) ? 'bg-gray-50 text-gray-600' : ''}`}
+  className={`w-24 rounded-lg border border-gray-200 dark:border-gray-600 px-2 py-1 ${w.name && WARD_CATALOG.some(c => c.name === w.name) ? 'bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-300' : ''}`}
   value={w[f.key] ?? ''}
   readOnly={!!(w.name && WARD_CATALOG.some(c => c.name === w.name))}
   onChange={(e) => updateRow(w._localId, { [f.key]: toNumOrNull(e.target.value) } as Partial<EditableWard>)}
@@ -347,11 +347,11 @@ export default function WardAnalysis() {
                       {w.category}
                     </span>
                   ) : (
-                    <span className="text-xs text-gray-300">—</span>
+                    <span className="text-xs text-gray-300 dark:text-gray-600">—</span>
                   )}
                 </td>
                 <td className="px-3 py-2">
-                  <button onClick={() => removeRow(w._localId)} className="text-gray-300 hover:text-red-500">
+                  <button onClick={() => removeRow(w._localId)} className="text-gray-300 dark:text-gray-600 hover:text-red-500">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </td>
@@ -362,15 +362,15 @@ export default function WardAnalysis() {
       </div>
 
       {boundaryDraftFor && (
-        <div className="border border-gray-100 rounded-xl p-4 bg-gray-50 space-y-2">
-          <p className="text-xs text-gray-500">
+        <div className="border border-gray-100 dark:border-gray-700 rounded-xl p-4 bg-gray-50 dark:bg-gray-900 space-y-2">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Paste the JSON printed by <code>gee_ward_boundary.py</code> (or any Polygon/MultiPolygon GeoJSON) for this ward.
           </p>
           <textarea
             value={boundaryText}
             onChange={(e) => setBoundaryText(e.target.value)}
             rows={6}
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 font-mono text-xs"
+            className="w-full rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-2 font-mono text-xs"
           />
           <div className="flex gap-2">
             <button
@@ -379,7 +379,7 @@ export default function WardAnalysis() {
             >
               Save boundary
             </button>
-            <button onClick={() => setBoundaryDraftFor(null)} className="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-500">
+            <button onClick={() => setBoundaryDraftFor(null)} className="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-500 dark:text-gray-400">
               Cancel
             </button>
           </div>
@@ -390,7 +390,7 @@ export default function WardAnalysis() {
         <button
           onClick={addRow}
           disabled={wards.length >= 25}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 disabled:opacity-40"
         >
           <Plus className="w-4 h-4" /> Add ward ({wards.length}/25)
         </button>
@@ -412,34 +412,34 @@ export default function WardAnalysis() {
 
       {result && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="border border-gray-100 rounded-xl p-4 space-y-2">
-            <h4 className="font-semibold text-sm text-gray-900 flex items-center gap-1.5">
+          <div className="border border-gray-100 dark:border-gray-700 rounded-xl p-4 space-y-2">
+            <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Sampling adequacy (Step 4)
             </h4>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-300">
               KMO: <strong>{result.diagnostics.kmo}</strong> ({result.diagnostics.kmo_adequacy})
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-300">
               Bartlett's test: χ² = {result.diagnostics.bartlett_chi_square}, df = {result.diagnostics.bartlett_df}
               {result.diagnostics.bartlett_p_value !== null && `, p = ${result.diagnostics.bartlett_p_value}`}
             </p>
             {result.warnings.length > 0 && (
-              <ul className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-2 space-y-1">
+              <ul className="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-800 rounded-lg p-2 space-y-1">
                 {result.warnings.map((w, i) => (
                   <li key={i}>• {w}</li>
                 ))}
               </ul>
             )}
           </div>
-          <div className="border border-gray-100 rounded-xl p-4 space-y-2">
-            <h4 className="font-semibold text-sm text-gray-900">PCA (Step 5)</h4>
-            <p className="text-sm text-gray-600">
+          <div className="border border-gray-100 dark:border-gray-700 rounded-xl p-4 space-y-2">
+            <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-100">PCA (Step 5)</h4>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
               Components kept (eigenvalue ≥ 1): <strong>{result.pca.components_kept}</strong>
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-300">
               Total variance explained: <strong>{result.pca.total_variance_explained_pct}%</strong>
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-300">
               Score mean {result.classification.mean_score}, SD {result.classification.sd_score}
             </p>
           </div>

@@ -53,61 +53,61 @@ export default function FinancialCalculator() {
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-xl border border-gray-100 shadow-soft p-4">
-        <h2 className="font-semibold text-gray-800 mb-1">Smart Financial Calculator</h2>
-        <p className="text-xs text-gray-500 mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-soft p-4">
+        <h2 className="font-semibold text-gray-800 dark:text-gray-100 mb-1">Smart Financial Calculator</h2>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
           Enter what you already have available - the calculator works out total project cost, loan
           eligibility, the right scheme, and a repayment plan.
         </p>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="col-span-2">
-            <label className="block text-xs text-gray-500 mb-1">Your available money (₹)</label>
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Your available money (₹)</label>
             <input
               type="number"
               value={ownContribution}
               onChange={(e) => setOwnContribution(e.target.value)}
               placeholder="e.g. 50000"
-              className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm"
+              className="w-full rounded-lg border border-gray-200 dark:border-gray-600 px-2 py-1.5 text-sm"
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Your share (%)</label>
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Your share (%)</label>
             <input
               type="number"
               value={ownPct}
               onChange={(e) => setOwnPct(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm"
+              className="w-full rounded-lg border border-gray-200 dark:border-gray-600 px-2 py-1.5 text-sm"
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Interest %/yr (optional)</label>
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Interest %/yr (optional)</label>
             <input
               type="number"
               value={interestOverride}
               onChange={(e) => setInterestOverride(e.target.value)}
               placeholder="auto"
-              className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm"
+              className="w-full rounded-lg border border-gray-200 dark:border-gray-600 px-2 py-1.5 text-sm"
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Tenure, months (optional)</label>
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Tenure, months (optional)</label>
             <input
               type="number"
               value={tenureOverride}
               onChange={(e) => setTenureOverride(e.target.value)}
               placeholder="auto"
-              className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm"
+              className="w-full rounded-lg border border-gray-200 dark:border-gray-600 px-2 py-1.5 text-sm"
             />
           </div>
           <div className="col-span-2">
-            <label className="block text-xs text-gray-500 mb-1">Monthly running expenses, ₹ (optional)</label>
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Monthly running expenses, ₹ (optional)</label>
             <input
               type="number"
               value={monthlyExpenseOverride}
               onChange={(e) => setMonthlyExpenseOverride(e.target.value)}
               placeholder="auto from your purchase history"
-              className="w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm"
+              className="w-full rounded-lg border border-gray-200 dark:border-gray-600 px-2 py-1.5 text-sm"
             />
           </div>
         </div>
@@ -123,7 +123,7 @@ export default function FinancialCalculator() {
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 bg-red-50 text-red-700 text-sm rounded-lg p-3">
+        <div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 text-sm rounded-lg p-3">
           <AlertTriangle size={16} /> {error}
         </div>
       )}
@@ -131,32 +131,32 @@ export default function FinancialCalculator() {
       {result && (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="bg-white rounded-xl border border-gray-100 shadow-soft p-3 text-center">
-              <div className="text-lg font-bold text-gray-800">{fmtInr(result.total_project_cost)}</div>
-              <div className="text-xs text-gray-500">total project cost</div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-soft p-3 text-center">
+              <div className="text-lg font-bold text-gray-800 dark:text-gray-100">{fmtInr(result.total_project_cost)}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">total project cost</div>
             </div>
-            <div className="bg-white rounded-xl border border-gray-100 shadow-soft p-3 text-center">
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-soft p-3 text-center">
               <div className="text-lg font-bold text-accent-600">{fmtInr(result.loan_amount)}</div>
-              <div className="text-xs text-gray-500">max loan eligibility</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">max loan eligibility</div>
             </div>
-            <div className="bg-white rounded-xl border border-gray-100 shadow-soft p-3 text-center">
-              <div className="text-lg font-bold text-gray-800">{result.scheme.name}</div>
-              <div className="text-xs text-gray-500">suggested scheme</div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-soft p-3 text-center">
+              <div className="text-lg font-bold text-gray-800 dark:text-gray-100">{result.scheme.name}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">suggested scheme</div>
             </div>
-            <div className="bg-white rounded-xl border border-gray-100 shadow-soft p-3 text-center">
-              <div className="text-lg font-bold text-gray-800">{fmtInr(result.emi_after_moratorium)}</div>
-              <div className="text-xs text-gray-500">EMI after moratorium</div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-soft p-3 text-center">
+              <div className="text-lg font-bold text-gray-800 dark:text-gray-100">{fmtInr(result.emi_after_moratorium)}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">EMI after moratorium</div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-100 shadow-soft p-4">
-            <h3 className="font-semibold text-gray-800 mb-2">Loan terms</h3>
-            <p className="text-sm text-gray-600 mb-3">{result.scheme.reason}</p>
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-soft p-4">
+            <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-2">Loan terms</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">{result.scheme.reason}</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-              <div><span className="text-gray-400">Interest rate</span><br />{result.interest_rate_pct}% p.a.</div>
-              <div><span className="text-gray-400">Tenure</span><br />{result.tenure_months} months</div>
-              <div><span className="text-gray-400">Moratorium</span><br />{result.moratorium_months} months</div>
-              <div><span className="text-gray-400">Total interest</span><br />{fmtInr(result.total_interest_payable)}</div>
+              <div><span className="text-gray-400 dark:text-gray-500">Interest rate</span><br />{result.interest_rate_pct}% p.a.</div>
+              <div><span className="text-gray-400 dark:text-gray-500">Tenure</span><br />{result.tenure_months} months</div>
+              <div><span className="text-gray-400 dark:text-gray-500">Moratorium</span><br />{result.moratorium_months} months</div>
+              <div><span className="text-gray-400 dark:text-gray-500">Total interest</span><br />{fmtInr(result.total_interest_payable)}</div>
             </div>
             <button
               onClick={() => setShowSchedule((s) => !s)}
@@ -167,8 +167,8 @@ export default function FinancialCalculator() {
             {showSchedule && (
               <div className="mt-2 max-h-64 overflow-y-auto">
                 <table className="w-full text-xs">
-                  <thead className="sticky top-0 bg-white">
-                    <tr className="text-left text-gray-400">
+                  <thead className="sticky top-0 bg-white dark:bg-gray-800">
+                    <tr className="text-left text-gray-400 dark:text-gray-500">
                       <th className="py-1">Month</th>
                       <th className="py-1">Phase</th>
                       <th className="py-1">Payment</th>
@@ -179,7 +179,7 @@ export default function FinancialCalculator() {
                   </thead>
                   <tbody>
                     {result.repayment_schedule.map((row) => (
-                      <tr key={row.month} className="border-t border-gray-50">
+                      <tr key={row.month} className="border-t border-gray-50 dark:border-gray-700">
                         <td className="py-1">{row.month}</td>
                         <td className="py-1 capitalize">{row.phase}</td>
                         <td className="py-1">{fmtInr(row.payment)}</td>
@@ -194,14 +194,14 @@ export default function FinancialCalculator() {
             )}
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-100 shadow-soft p-4">
-            <h3 className="font-semibold text-gray-800 mb-2">Working capital</h3>
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-soft p-4">
+            <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-2">Working capital</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-              <div><span className="text-gray-400">Monthly running expenses</span><br />{fmtInr(result.working_capital.monthly_operating_expenses)}</div>
-              <div><span className="text-gray-400">Working capital cycle</span><br />{result.working_capital.cycle_months} months</div>
-              <div><span className="text-gray-400">Working capital needed</span><br />{fmtInr(result.working_capital.working_capital_needed)}</div>
+              <div><span className="text-gray-400 dark:text-gray-500">Monthly running expenses</span><br />{fmtInr(result.working_capital.monthly_operating_expenses)}</div>
+              <div><span className="text-gray-400 dark:text-gray-500">Working capital cycle</span><br />{result.working_capital.cycle_months} months</div>
+              <div><span className="text-gray-400 dark:text-gray-500">Working capital needed</span><br />{fmtInr(result.working_capital.working_capital_needed)}</div>
             </div>
-            <p className="text-xs text-gray-400 mt-2">
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
               {result.working_capital.source === 'purchases_history_90d_avg'
                 ? 'Based on your last 90 days of recorded purchases.'
                 : result.working_capital.source === 'fallback_estimate'
@@ -210,7 +210,7 @@ export default function FinancialCalculator() {
             </p>
           </div>
 
-          <div className="flex items-start gap-2 bg-amber-50 text-amber-800 text-xs rounded-lg p-3">
+          <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 text-xs rounded-lg p-3">
             <Info size={14} className="mt-0.5 shrink-0" />
             {result.disclaimer}
           </div>

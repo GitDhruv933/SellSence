@@ -306,3 +306,93 @@ export interface FinancialEstimate {
   disclaimer: string;
 }
 
+// --- Module 3: Smart Competitor Word Analysis ---
+
+export interface WordAnalysisPhrase {
+  phrase: string;
+  count: number;
+  example: string;
+}
+
+export interface WordAnalysisWord {
+  word: string;
+  count: number;
+  example: string;
+}
+
+export interface WordAnalysisResult {
+  reviewsAnalyzed: number;
+  topPhrases: WordAnalysisPhrase[];
+  topWords: WordAnalysisWord[];
+  message?: string;
+}
+
+export interface OwnWordAnalysis extends WordAnalysisResult {
+  ratingMax: number;
+  totalReviews: number;
+  avgRating: number;
+}
+
+export interface RivalVendor {
+  id: number;
+  shop_name: string | null;
+  shop_category: string | null;
+  review_count: number;
+  negative_review_count: number;
+}
+
+export interface RivalsResponse {
+  category?: string;
+  rivals: RivalVendor[];
+  message?: string;
+}
+
+export interface CompetitorWordAnalysis extends WordAnalysisResult {
+  vendor: { id: number; shop_name: string | null; shop_category: string | null };
+  ratingMax: number;
+  totalReviews: number;
+  avgRating: number;
+}
+
+export interface ExternalWordAnalysis extends WordAnalysisResult {
+  sourceLabel: string;
+}
+
+// --- Module 4: Smart Pricing ---
+
+export interface PricingSuggestion {
+  product: { id: number; name: string; category: string | null; unit: string };
+  currentPrice: number;
+  suggestedPrice: number;
+  direction: 'increase' | 'decrease';
+  pct: number;
+  reason: string;
+  metric: Record<string, number | null>;
+  otherSignalsConsidered: boolean;
+}
+
+export interface PricingSuggestionsResponse {
+  windowDays: number;
+  suggestions: PricingSuggestion[];
+}
+
+export interface PricingApplyResponse {
+  product: { id: number; name: string; selling_price: number };
+  oldPrice: number;
+  newPrice: number;
+}
+
+export interface PriceChangeLogEntry {
+  id: number;
+  product_id: number;
+  product_name: string;
+  old_price: number;
+  new_price: number;
+  reason: string | null;
+  source: string;
+  created_at: string;
+}
+
+export interface PricingHistoryResponse {
+  history: PriceChangeLogEntry[];
+}

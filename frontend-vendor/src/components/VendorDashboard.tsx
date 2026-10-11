@@ -12,9 +12,12 @@ import {
   Map,
   FileText,
   Calculator,
+  Swords,
+  IndianRupee,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '@/api/client';
+import Navbar from './Navbar';
 import type {
   BackendProduct,
   Order,
@@ -42,8 +45,10 @@ import OrderStatusChart from './OrderStatusChart';
 import WardAnalysis from './WardAnalysis';
 import BusinessReport from './BusinessReport';
 import FinancialCalculator from './FinancialCalculator';
+import WordAnalysis from './WordAnalysis';
+import SmartPricing from './SmartPricing';
 
-type Tab = 'overview' | 'inventory' | 'orders' | 'insights' | 'wards' | 'report' | 'finance';
+type Tab = 'overview' | 'inventory' | 'orders' | 'insights' | 'wards' | 'report' | 'finance' | 'words' | 'pricing';
 
 const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
   pending: 'confirmed',
@@ -183,49 +188,34 @@ export default function VendorDashboard() {
 
   const maxByProductRevenue = Math.max(1, ...byProduct.map(p => p.revenue));
 
+  const tabs = [
+    { key: 'overview', label: 'Overview', icon: TrendingUp, badge: 0 },
+    { key: 'inventory', label: 'Inventory', icon: Package, badge: 0 },
+    { key: 'orders', label: 'Orders', icon: Bell, badge: highAlertCount },
+    { key: 'insights', label: 'Sales Insights', icon: Sparkles, badge: 0 },
+    { key: 'wards', label: 'Ward Analysis', icon: Map, badge: 0 },
+    { key: 'report', label: 'Business Report', icon: FileText, badge: 0 },
+    { key: 'finance', label: 'Financial Calculator', icon: Calculator, badge: 0 },
+    { key: 'words', label: 'Word Analysis', icon: Swords, badge: 0 },
+    { key: 'pricing', label: 'Smart Pricing', icon: IndianRupee, badge: 0 },
+  ] as const;
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h2 className="font-display font-extrabold text-2xl text-gray-900 mb-1">Vendor Dashboard</h2>
-            <p className="text-sm text-gray-400 font-medium">Manage your shop, orders, and business insights</p>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Navbar tabs={[...tabs]} activeTab={tab} onTabChange={(key) => setTab(key as Tab)} />
+
+      <div className="pl-16 lg:pl-64">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h2 className="font-display font-extrabold text-2xl text-gray-900 dark:text-gray-100 mb-1">Vendor Dashboard</h2>
+              <p className="text-sm text-gray-400 dark:text-gray-500 font-medium">Manage your shop, orders, and business insights</p>
+            </div>
+            {loading && <Loader2 className="w-5 h-5 text-gray-300 dark:text-gray-600 animate-spin" />}
           </div>
-          {loading && <Loader2 className="w-5 h-5 text-gray-300 animate-spin" />}
-        </div>
 
-        <div className="flex items-center gap-1 bg-white rounded-2xl p-1 border border-gray-100 shadow-soft mb-6 w-fit overflow-x-auto">
-          {(
-            [
-              { key: 'overview', label: 'Overview', icon: TrendingUp, badge: 0 },
-              { key: 'inventory', label: 'Inventory', icon: Package, badge: 0 },
-              { key: 'orders', label: 'Orders', icon: Bell, badge: highAlertCount },
-              { key: 'insights', label: 'Sales Insights', icon: Sparkles, badge: 0 },
-              { key: 'wards', label: 'Ward Analysis', icon: Map, badge: 0 },
-              { key: 'report', label: 'Business Report', icon: FileText, badge: 0 },
-              { key: 'finance', label: 'Financial Calculator', icon: Calculator, badge: 0 },
-            ] as const
-          ).map(({ key, label, icon: Icon, badge }) => (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              className={`relative flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 whitespace-nowrap ${
-                tab === key ? 'bg-accent-500 text-white shadow-soft' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              {label}
-              {!!badge && (
-                <span className="ml-1 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
-                  {badge}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-
-        {tab === 'overview' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in">
+          {tab === 'overview' && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in">
             <div className="lg:col-span-2 space-y-6">
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard
@@ -267,10 +257,10 @@ export default function VendorDashboard() {
                 <DailySalesChart data={daily} />
               </div>
 
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-soft p-5">
-                <h3 className="font-display font-bold text-base text-gray-900 mb-4">Top-Moving Products (30d)</h3>
+              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-soft p-5">
+                <h3 className="font-display font-bold text-base text-gray-900 dark:text-gray-100 mb-4">Top-Moving Products (30d)</h3>
                 {byProduct.filter(p => p.units_sold > 0).length === 0 ? (
-                  <p className="text-sm text-gray-400">No sales recorded yet in the last 30 days.</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500">No sales recorded yet in the last 30 days.</p>
                 ) : (
                   <div className="space-y-3">
                     {byProduct
@@ -278,15 +268,15 @@ export default function VendorDashboard() {
                       .slice(0, 5)
                       .map((tp, idx) => (
                         <div key={tp.name} className="flex items-center gap-3">
-                          <span className="w-6 text-center text-sm font-bold text-gray-400">{idx + 1}</span>
+                          <span className="w-6 text-center text-sm font-bold text-gray-400 dark:text-gray-500">{idx + 1}</span>
                           <div className="flex-1">
                             <div className="flex items-center justify-between mb-1">
-                              <span className="text-sm font-semibold text-gray-800">{tp.name}</span>
-                              <span className="text-xs text-gray-400 font-medium">
+                              <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">{tp.name}</span>
+                              <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">
                                 {tp.units_sold} units · ₹{tp.revenue.toLocaleString()}
                               </span>
                             </div>
-                            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                               <div
                                 className="h-full bg-gradient-to-r from-primary-400 to-primary-600 rounded-full transition-all duration-700"
                                 style={{ width: `${(tp.revenue / maxByProductRevenue) * 100}%` }}
@@ -325,9 +315,9 @@ export default function VendorDashboard() {
         {tab === 'orders' && (
           <div className="animate-fade-in space-y-3">
             {orders.length === 0 ? (
-              <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
-                <Bell className="w-8 h-8 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500 font-medium">No orders yet. New orders will alert you here.</p>
+              <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
+                <Bell className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                <p className="text-gray-500 dark:text-gray-400 font-medium">No orders yet. New orders will alert you here.</p>
               </div>
             ) : (
               orders.map(order => {
@@ -335,37 +325,37 @@ export default function VendorDashboard() {
                 return (
                   <div
                     key={order.id}
-                    className={`bg-white rounded-2xl border p-4 shadow-soft ${
-                      isHighAlert ? 'border-red-200 ring-2 ring-red-100' : 'border-gray-100'
+                    className={`bg-white dark:bg-gray-800 rounded-2xl border p-4 shadow-soft ${
+                      isHighAlert ? 'border-red-200 dark:border-red-800 ring-2 ring-red-100' : 'border-gray-100 dark:border-gray-700'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3 mb-3">
                       <div>
                         <div className="flex items-center gap-2 mb-0.5">
-                          <h4 className="font-display font-bold text-sm text-gray-900">Order #{order.id}</h4>
+                          <h4 className="font-display font-bold text-sm text-gray-900 dark:text-gray-100">Order #{order.id}</h4>
                           {isHighAlert && (
-                            <span className="flex items-center gap-1 bg-red-50 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">
+                            <span className="flex items-center gap-1 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">
                               <Bell className="w-2.5 h-2.5" /> HIGH ALERT
                             </span>
                           )}
-                          <span className="text-[11px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                          <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
                             {STATUS_LABEL[order.status]}
                           </span>
                         </div>
-                        <p className="text-xs text-gray-400 flex items-center gap-1">
+                        <p className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
                           {order.customer_name || 'Customer'}
                           {order.customer_phone && (
                             <>
-                              <span className="w-1 h-1 rounded-full bg-gray-300" />
+                              <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-500" />
                               <Phone className="w-3 h-3" /> {order.customer_phone}
                             </>
                           )}
                         </p>
                       </div>
-                      <span className="font-display font-extrabold text-base text-gray-900">₹{order.total.toFixed(2)}</span>
+                      <span className="font-display font-extrabold text-base text-gray-900 dark:text-gray-100">₹{order.total.toFixed(2)}</span>
                     </div>
 
-                    <ul className="text-xs text-gray-600 space-y-0.5 mb-3">
+                    <ul className="text-xs text-gray-600 dark:text-gray-300 space-y-0.5 mb-3">
                       {order.items.map(i => (
                         <li key={i.id} className="flex justify-between">
                           <span>{i.product_name} × {i.quantity}</span>
@@ -398,7 +388,7 @@ export default function VendorDashboard() {
                           Generate Bill
                         </button>
                       ) : (
-                        <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 text-gray-500 text-xs font-semibold">
+                        <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs font-semibold">
                           <CheckCircle2 className="w-3.5 h-3.5" /> Billed
                         </span>
                       )}
@@ -416,22 +406,22 @@ export default function VendorDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <CategoryBreakdown data={categories} />
               <ProfitMarginChart data={profitMargins} />
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-soft p-5">
-                <h3 className="font-display font-bold text-base text-gray-900 mb-4">Restock Suggestions</h3>
+              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-soft p-5">
+                <h3 className="font-display font-bold text-base text-gray-900 dark:text-gray-100 mb-4">Restock Suggestions</h3>
                 <div className="space-y-3">
                   {suggestions.filter(s => s.action !== 'maintain').length === 0 ? (
-                    <p className="text-sm text-gray-400">Nothing needs attention right now.</p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500">Nothing needs attention right now.</p>
                   ) : (
                     suggestions
                       .filter(s => s.action !== 'maintain')
                       .map(s => (
                         <div
                           key={s.product_id}
-                          className="flex items-center justify-between p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors"
+                          className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                         >
                           <div>
-                            <p className="text-sm font-semibold text-gray-800">{s.name}</p>
-                            <p className="text-xs text-gray-400">{s.reason}</p>
+                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{s.name}</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500">{s.reason}</p>
                           </div>
                           <span
                             className={`text-xs font-bold px-2 py-1 rounded-full ${
@@ -446,11 +436,11 @@ export default function VendorDashboard() {
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-soft p-5">
-              <h3 className="font-display font-bold text-base text-gray-900 mb-4">Revenue by Product (30d)</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-soft p-5">
+              <h3 className="font-display font-bold text-base text-gray-900 dark:text-gray-100 mb-4">Revenue by Product (30d)</h3>
               <div className="space-y-3">
                 {byProduct.filter(p => p.revenue > 0).length === 0 ? (
-                  <p className="text-sm text-gray-400">No revenue recorded yet.</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500">No revenue recorded yet.</p>
                 ) : (
                   byProduct
                     .filter(p => p.revenue > 0)
@@ -461,10 +451,10 @@ export default function VendorDashboard() {
                       return (
                         <div key={c.name}>
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm font-semibold text-gray-700">{c.name}</span>
-                            <span className="text-xs text-gray-400 font-medium">{pct}%</span>
+                            <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{c.name}</span>
+                            <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">{pct}%</span>
                           </div>
-                          <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="h-2.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                             <div
                               className="h-full bg-gradient-to-r from-primary-400 to-primary-600 rounded-full transition-all duration-700"
                               style={{ width: `${pct}%` }}
@@ -480,22 +470,35 @@ export default function VendorDashboard() {
         )}
 
         {tab === 'wards' && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-soft p-5">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-soft p-5">
             <WardAnalysis />
           </div>
         )}
 
         {tab === 'report' && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-soft p-5">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-soft p-5">
             <BusinessReport />
           </div>
         )}
 
         {tab === 'finance' && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-soft p-5">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-soft p-5">
             <FinancialCalculator />
           </div>
         )}
+
+        {tab === 'words' && (
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-soft p-5">
+            <WordAnalysis />
+          </div>
+        )}
+
+        {tab === 'pricing' && (
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-soft p-5">
+            <SmartPricing />
+          </div>
+        )}
+        </div>
       </div>
     </div>
   );

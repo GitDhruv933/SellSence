@@ -162,6 +162,53 @@ CREATE TABLE IF NOT EXISTS reviews (
 CREATE INDEX IF NOT EXISTS idx_reviews_product ON reviews(product_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_vendor ON reviews(vendor_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_customer ON reviews(customer_id);
+
+-- Smart Pricing: a lightweight view counter (no dedicated product detail
+-- page exists yet, so the customer app pings this once per product card
+-- impression), a log of price changes so vendors can see/undo what the
+-- feature has done, and a rules table instead of hardcoded thresholds -
+-- vendor_id NULL rows are the global defaults; a vendor-specific row for
+-- the same condition_type overrides it (most-specific-wins, same pattern
+-- Mercur's commission-rule matching uses, just without the region/
+-- customer-group scoping this app doesn't need).
+CREATE TABLE IF NOT EXISTS product_views (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  viewer_key TEXT NOT NULL,
+  viewed_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_product_views_product ON product_views(product_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_product_views_dedupe
+  ON product_views(product_id, viewer_key, date(viewed_at));
+
+CREATE TABLE IF NOT EXISTS price_change_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  vendor_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  old_price REAL NOT NULL,
+  new_price REAL NOT NULL,
+  reason TEXT,
+  source TEXT NOT NULL DEFAULT 'smart_pricing',
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_price_change_log_vendor ON price_change_log(vendor_id);
+
+CREATE TABLE IF NOT EXISTS pricing_rules (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  vendor_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  condition_type TEXT NOT NULL,
+  threshold_views INTEGER,
+  threshold_conversion_rate REAL,
+  min_positive_reviews INTEGER,
+  adjustment_pct REAL NOT NULL,
+  priority INTEGER NOT NULL DEFAULT 0,
+  enabled INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_pricing_rules_vendor ON pricing_rules(vendor_id, condition_type);
 `);
 
 // --- Migrations: add columns introduced after the initial release. ---
@@ -182,5 +229,24 @@ ensureColumn('users', 'address', 'TEXT');
 ensureColumn('users', 'latitude', 'REAL');
 ensureColumn('users', 'longitude', 'REAL');
 ensureColumn('products', 'image_url', 'TEXT');
+
+// Seed the two global default pricing rules once. vendor_id IS NULL means
+// "applies to every vendor unless they have their own row for this
+// condition_type". Safe to run every start - only inserts if the global
+// rule set is empty.
+const globalRuleCount = db
+  .prepare('SELECT COUNT(*) AS c FROM pricing_rules WHERE vendor_id IS NULL')
+  .get().c;
+if (globalRuleCount === 0) {
+  db.prepare(
+    `INSERT INTO pricing_rules (vendor_id, condition_type, threshold_views, threshold_conversion_rate, adjustment_pct, priority)
+     VALUES (NULL, 'high_views_low_sales', 20, 0.05, -5, 10)`
+  ).run();
+  db.prepare(
+    `INSERT INTO pricing_rules (vendor_id, condition_type, min_positive_reviews, adjustment_pct, priority)
+     VALUES (NULL, 'positive_quality_sentiment', 3, 10, 5)`
+  ).run();
+  console.log('Seeded default Smart Pricing rules');
+}
 
 module.exports = db;

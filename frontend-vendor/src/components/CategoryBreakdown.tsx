@@ -12,11 +12,11 @@ export default function CategoryBreakdown({ data }: CategoryBreakdownProps) {
 
   if (data.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-soft p-5">
-        <h3 className="font-display font-bold text-base text-gray-900 mb-1">Revenue by Category</h3>
-        <p className="text-xs text-gray-400 font-medium mb-4">Last 30 days</p>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-soft p-5">
+        <h3 className="font-display font-bold text-base text-gray-900 dark:text-gray-100 mb-1">Revenue by Category</h3>
+        <p className="text-xs text-gray-400 dark:text-gray-500 font-medium mb-4">Last 30 days</p>
         <div className="h-48 flex items-center justify-center">
-          <p className="text-sm text-gray-400">No category data yet.</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">No category data yet.</p>
         </div>
       </div>
     );
@@ -31,10 +31,10 @@ export default function CategoryBreakdown({ data }: CategoryBreakdownProps) {
   const center = size / 2;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-soft p-5">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-soft p-5">
       <div className="mb-4">
-        <h3 className="font-display font-bold text-base text-gray-900">Revenue by Category</h3>
-        <p className="text-xs text-gray-400 font-medium mt-0.5">Last 30 days</p>
+        <h3 className="font-display font-bold text-base text-gray-900 dark:text-gray-100">Revenue by Category</h3>
+        <p className="text-xs text-gray-400 dark:text-gray-500 font-medium mt-0.5">Last 30 days</p>
       </div>
 
       <div className="flex items-center gap-5">
@@ -86,9 +86,9 @@ export default function CategoryBreakdown({ data }: CategoryBreakdownProps) {
             >
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                <span className="text-gray-600 font-medium truncate max-w-[100px]">{item.category}</span>
+                <span className="text-gray-600 dark:text-gray-300 font-medium truncate max-w-[100px]">{item.category}</span>
               </div>
-              <span className="text-gray-400 font-semibold">₹{item.revenue.toLocaleString()}</span>
+              <span className="text-gray-400 dark:text-gray-500 font-semibold">₹{item.revenue.toLocaleString()}</span>
             </div>
           ))}
         </div>
